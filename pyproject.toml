@@ -1,0 +1,260 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "organizeg3"
+version = "0.1.0"
+description = "Plataforma operacional inteligente para empresas orientadas a processos."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+authors = [
+{ name = "OrganizeG Team" }
+]
+keywords = [
+"erp",
+"manufacturing",
+"workflow",
+"production",
+"pwa",
+"supabase",
+"fastapi",
+]
+
+dependencies = [
+"alembic>=1.13,<2.0",
+"fastapi>=0.115,<1.0",
+"httpx>=0.27,<1.0",
+"orjson>=3.10,<4.0",
+"psycopg[binary]>=3.2,<4.0",
+"pydantic>=2.9,<3.0",
+"pydantic-settings>=2.5,<3.0",
+"python-dotenv>=1.0,<2.0",
+"python-jose[cryptography]>=3.3,<4.0",
+"python-multipart>=0.0.12,<1.0",
+"sqlalchemy>=2.0,<3.0",
+"structlog>=24.4,<26.0",
+"supabase>=2.8,<3.0",
+"uvicorn[standard]>=0.30,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+"mypy>=1.11,<2.0",
+"pre-commit>=3.8,<5.0",
+"pytest>=8.3,<9.0",
+"pytest-asyncio>=0.24,<1.0",
+"pytest-cov>=5.0,<7.0",
+"pytest-mock>=3.14,<4.0",
+"ruff>=0.7,<1.0",
+"types-python-jose>=3.3,<4.0",
+]
+
+desktop = [
+"pyside6>=6.8,<7.0",
+]
+
+[project.urls]
+Documentation = "https://local.organizeg3/docs"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = [
+"apps/api/src",
+"packages/application/src",
+"packages/contracts/src",
+"packages/domain/src",
+"packages/shared/src",
+".",
+]
+addopts = [
+"-ra",
+"--strict-config",
+"--strict-markers",
+"--cov=apps",
+"--cov=packages",
+"--cov-report=term-missing",
+"--cov-report=html",
+]
+asyncio_mode = "auto"
+markers = [
+"unit: testes unitários sem infraestrutura externa",
+"integration: testes de integração com banco ou serviços",
+"e2e: testes completos de interface e fluxos",
+"slow: testes de execução demorada",
+]
+
+[tool.coverage.run]
+branch = true
+source = [
+"apps",
+"packages",
+]
+omit = [
+"*/tests/*",
+"*/**init**.py",
+"*/migrations/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 70
+exclude_lines = [
+"pragma: no cover",
+"if TYPE_CHECKING:",
+"raise NotImplementedError",
+"@overload",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = [
+"apps/api/src",
+"packages/application/src",
+"packages/contracts/src",
+"packages/domain/src",
+"packages/shared/src",
+"theme_design",
+]
+exclude = [
+".git",
+".mypy_cache",
+".pytest_cache",
+".ruff_cache",
+".venv",
+"alembic/versions",
+"build",
+"dist",
+]
+
+[tool.ruff.lint]
+select = [
+"A",
+"ANN",
+"ARG",
+"ASYNC",
+"B",
+"BLE",
+"C4",
+"COM",
+"DTZ",
+"E",
+"ERA",
+"F",
+"FAST",
+"FBT",
+"G",
+"I",
+"ICN",
+"INP",
+"LOG",
+"N",
+"PERF",
+"PIE",
+"PL",
+"PTH",
+"PYI",
+"RET",
+"RSE",
+"RUF",
+"S",
+"SIM",
+"SLF",
+"T10",
+"T20",
+"TC",
+"TRY",
+"UP",
+"W",
+]
+ignore = [
+"ANN101",
+"ANN102",
+"COM812",
+"ISC001",
+"PLR0913",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+"ANN",
+"S101",
+"PLR2004",
+]
+"database/**/*.py" = [
+"INP001",
+]
+"theme_design/**/*.py" = [
+"PLR2004",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+"organizeg3_api",
+"organizeg3_application",
+"organizeg3_contracts",
+"organizeg3_domain",
+"organizeg3_shared",
+"theme_design",
+]
+combine-as-imports = true
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+namespace_packages = true
+explicit_package_bases = true
+plugins = [
+"pydantic.mypy",
+"sqlalchemy.ext.mypy.plugin",
+]
+mypy_path = [
+"apps/api/src",
+"packages/application/src",
+"packages/contracts/src",
+"packages/domain/src",
+"packages/shared/src",
+]
+
+[[tool.mypy.overrides]]
+module = [
+"supabase.*",
+]
+ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.organizeg3]
+documentation_language = "pt-BR"
+code_language = "en"
+default_timezone = "America/Sao_Paulo"
+visual_theme = "dark"
+hardcoded_visual_styles_allowed = false
+tenant_isolation_required = true
+domain_events_required = true

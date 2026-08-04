@@ -1,0 +1,358 @@
+# =============================================================================
+
+# ORGANIZEG3 — GITIGNORE
+
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+
+# Python
+
+# -----------------------------------------------------------------------------
+
+**pycache**/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+# Distribution / packaging
+
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# -----------------------------------------------------------------------------
+
+# Virtual environments
+
+# -----------------------------------------------------------------------------
+
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# -----------------------------------------------------------------------------
+
+# Environment variables and secrets
+
+# -----------------------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+secrets/
+credentials/
+private/
+
+# -----------------------------------------------------------------------------
+
+# Testing
+
+# -----------------------------------------------------------------------------
+
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+hypothesis/
+pytestdebug.log
+
+# -----------------------------------------------------------------------------
+
+# Type checking and linting
+
+# -----------------------------------------------------------------------------
+
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+.ruff_cache/
+.pyre/
+.pytype/
+
+# -----------------------------------------------------------------------------
+
+# IDEs and editors
+
+# -----------------------------------------------------------------------------
+
+# VS Code
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# JetBrains
+
+.idea/
+*.iml
+
+# Visual Studio
+
+.vs/
+
+# Sublime Text
+
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+
+*.swp
+*.swo
+*~
+
+# -----------------------------------------------------------------------------
+
+# Operating systems
+
+# -----------------------------------------------------------------------------
+
+# Windows
+
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Linux
+
+.directory
+.Trash-*
+
+# -----------------------------------------------------------------------------
+
+# Logs
+
+# -----------------------------------------------------------------------------
+
+logs/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+
+# Databases and local storage
+
+# -----------------------------------------------------------------------------
+
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+local_storage/
+storage/
+uploads/
+tmp/
+temp/
+
+# -----------------------------------------------------------------------------
+
+# Alembic
+
+# -----------------------------------------------------------------------------
+
+# As migrations oficiais devem ser versionadas.
+
+# Não ignorar database/migrations nem alembic/versions.
+
+# -----------------------------------------------------------------------------
+
+# Supabase
+
+# -----------------------------------------------------------------------------
+
+.supabase/
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/functions/.env
+
+# -----------------------------------------------------------------------------
+
+# FastAPI / Uvicorn
+
+# -----------------------------------------------------------------------------
+
+uvicorn.pid
+gunicorn.pid
+
+# -----------------------------------------------------------------------------
+
+# PySide6 / Desktop builds
+
+# -----------------------------------------------------------------------------
+
+*.spec
+*.manifest
+*.app
+*.exe
+*.msi
+
+desktop_build/
+desktop_dist/
+installer_output/
+
+# Arquivos gerados pelo Qt
+
+ui_*.py
+qrc_*.py
+
+# -----------------------------------------------------------------------------
+
+# Node / PWA
+
+# -----------------------------------------------------------------------------
+
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.yarn-cache/
+
+.next/
+.nuxt/
+.svelte-kit/
+.vite/
+vite.config.*.timestamp-*
+dist-pwa/
+build-pwa/
+
+coverage/
+.nyc_output/
+
+# PWA service worker gerado
+
+sw.js
+sw.js.map
+workbox-*.js
+workbox-*.js.map
+
+# -----------------------------------------------------------------------------
+
+# Generated files
+
+# -----------------------------------------------------------------------------
+
+generated/
+generated_reports/
+exports/
+backups/
+cache/
+.cache/
+
+# -----------------------------------------------------------------------------
+
+# Documentation builds
+
+# -----------------------------------------------------------------------------
+
+site/
+docs/_build/
+mkdocs_build/
+
+# -----------------------------------------------------------------------------
+
+# Temporary and backup files
+
+# -----------------------------------------------------------------------------
+
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*.tmp
+*.temp
+*.cache
+
+# -----------------------------------------------------------------------------
+
+# OrganizeG3 local files
+
+# -----------------------------------------------------------------------------
+
+.organizeg3/
+organizeg3.local.json
+local_config.json
+local_settings.json
+
+# Dados locais de desenvolvimento
+
+dev_data/
+sample_uploads/
+test_uploads/
+
+# Arquivos de exportação local
+
+*.xlsx.tmp
+*.pdf.tmp
+*.csv.tmp
+
+# -----------------------------------------------------------------------------
+
+# Security
+
+# -----------------------------------------------------------------------------
+
+# Nunca versionar dumps de produção
+
+*.dump
+*.sql.gz
+production_dump*
+production_backup*
+
+# Nunca versionar arquivos com dados pessoais
+
+personal_data/
+customer_data/
+tenant_data/
