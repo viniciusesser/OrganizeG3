@@ -6,9 +6,9 @@ inherit from these classes or depend on SQLAlchemy.
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import ClassVar
+import uuid
 
 from sqlalchemy import (
     Boolean,
@@ -26,7 +26,6 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-
 NAMING_CONVENTION: dict[str, str] = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -42,7 +41,7 @@ metadata = MetaData(naming_convention=NAMING_CONVENTION)
 def utc_now() -> datetime:
     """Return the current timezone-aware UTC datetime."""
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class Base(DeclarativeBase):
@@ -65,7 +64,7 @@ class TenantScopedMixin:
     """Associate a persistence record with exactly one tenant."""
 
     @declared_attr.directive
-    def tenant_id(cls) -> Mapped[uuid.UUID]:
+    def tenant_id(self) -> Mapped[uuid.UUID]:
         """Return the tenant foreign-key column."""
 
         return mapped_column(
@@ -100,7 +99,7 @@ class ActorAuditMixin:
     """Record the users responsible for creating and updating a record."""
 
     @declared_attr.directive
-    def created_by_user_id(cls) -> Mapped[uuid.UUID | None]:
+    def created_by_user_id(self) -> Mapped[uuid.UUID | None]:
         """Return the creator user foreign-key column."""
 
         return mapped_column(
@@ -113,7 +112,7 @@ class ActorAuditMixin:
         )
 
     @declared_attr.directive
-    def updated_by_user_id(cls) -> Mapped[uuid.UUID | None]:
+    def updated_by_user_id(self) -> Mapped[uuid.UUID | None]:
         """Return the updater user foreign-key column."""
 
         return mapped_column(
