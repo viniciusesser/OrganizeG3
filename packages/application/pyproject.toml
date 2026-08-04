@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "organizeg3-application"
+version = "0.1.0"
+description = "Casos de uso e orquestração da plataforma OrganizeG3."
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["organizeg3_application*"]

@@ -1,0 +1,37 @@
+﻿{
+    "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/apps/api/src",
+        "${workspaceFolder}/apps/desktop/src",
+        "${workspaceFolder}/packages/shared/src",
+        "${workspaceFolder}/packages/domain/src",
+        "${workspaceFolder}/packages/contracts/src",
+        "${workspaceFolder}/packages/application/src"
+    ],
+
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests",
+        "apps/api/tests",
+        "apps/desktop/tests"
+    ],
+
+    "editor.formatOnSave": true,
+
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/*.egg-info": true
+    }
+}
