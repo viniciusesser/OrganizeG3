@@ -282,6 +282,7 @@ class Settings(BaseSettings):
             "Idempotency-Key",
             "X-Correlation-ID",
             "X-Device-ID",
+            "X-Tenant-ID",
         ],
         alias="CORS_ALLOWED_HEADERS",
     )

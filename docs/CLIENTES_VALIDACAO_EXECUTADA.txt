@@ -1,0 +1,46 @@
+=== Python ===
+Python 3.13.5
+
+=== Compileall ===
+OK
+
+=== Pytest + coverage ===
+......................................                                   [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.5-final-0 ________________
+
+Name                                                                                         Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------------------------------------------------------------------------
+apps/api/src/organizeg3_api/application/customer/schemas.py                                     23      0      0      0   100%
+apps/api/src/organizeg3_api/application/customer/use_cases/create_customer.py                   12      0      0      0   100%
+apps/api/src/organizeg3_api/application/customer/use_cases/list_customers.py                    10      0      0      0   100%
+apps/api/src/organizeg3_api/config.py                                                          158     38     46     10    66%   56-64, 387, 390, 392->395, 408, 411, 413->404, 428->425, 438-463, 468-470, 485, 491, 497, 521, 526-529, 534-537
+apps/api/src/organizeg3_api/core/base.py                                                         2      2      0      0     0%   7-24
+apps/api/src/organizeg3_api/core/exceptions.py                                                  33      0      0      0   100%
+apps/api/src/organizeg3_api/core/logging.py                                                     64     17     22      4    66%   42-61, 87->100, 101, 171, 174
+apps/api/src/organizeg3_api/domain/customer/entity.py                                           56      1     12      1    97%   50
+apps/api/src/organizeg3_api/domain/customer/repository.py                                       12      0      0      0   100%
+apps/api/src/organizeg3_api/infrastructure/database/base.py                                     42      4      0      0    90%   44, 70, 105, 118
+apps/api/src/organizeg3_api/infrastructure/database/session.py                                 107     66     22      1    33%   25-27, 31, 35, 39-42, 46-49, 52-78, 81-86, 90-99, 102-110, 113-114, 117-120, 124-129, 139-141, 146-147, 156, 162-164
+apps/api/src/organizeg3_api/infrastructure/http/api/v1/customers.py                             21      0      0      0   100%
+apps/api/src/organizeg3_api/infrastructure/http/dependencies.py                                 22      2      4      1    88%   20, 37
+apps/api/src/organizeg3_api/infrastructure/persistence/models/customer.py                       18      0      0      0   100%
+apps/api/src/organizeg3_api/infrastructure/persistence/repositories/customer_repository.py      47      0      8      0   100%
+apps/api/src/organizeg3_api/main.py                                                             34      0      0      0   100%
+apps/api/src/organizeg3_api/middleware/correlation_id.py                                        31      3      4      1    83%   62-65
+apps/api/src/organizeg3_api/middleware/error_handler.py                                         33      4      0      0    88%   105-111, 123-131
+----------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                                                                                          725    137    118     18    75%
+Required test coverage of 70.0% reached. Total coverage: 75.44%
+38 passed in 0.56s
+
+=== Rotas ===
+['/openapi.json', '/docs', '/docs/oauth2-redirect', '/redoc', '/api/v1/customers', '/api/v1/customers', '/health']
+
+=== Alembic heads ===
+0439fdabfa05 (head)
+
+=== Alembic history ===
+62bc842a4881 -> 0439fdabfa05 (head), add_customer_columns
+acc9bffaedbc -> 62bc842a4881, baseline_legado
+<base> -> acc9bffaedbc, Establish the legacy database as the Alembic baseline.

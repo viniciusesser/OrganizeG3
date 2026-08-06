@@ -356,3 +356,28 @@ production_backup*
 personal_data/
 customer_data/
 tenant_data/
+
+# Arquivos temporários e relatórios locais
+reports/
+*.patch
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Ambientes e configurações locais
+.venv/
+.env
+.env.local
+
+# Editores e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

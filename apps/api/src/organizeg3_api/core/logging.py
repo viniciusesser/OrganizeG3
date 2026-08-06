@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 import logging
 import sys
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -33,7 +33,7 @@ device_id_context: ContextVar[str | None] = ContextVar(
 
 
 def add_request_context(
-    logger: Any,
+    logger: Any,  # noqa: ANN401
     method_name: str,
     event_dict: dict[str, Any],
 ) -> dict[str, Any]:
@@ -149,7 +149,7 @@ def configure_logging(settings: Settings) -> None:
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     """Return a structured logger."""
 
-    return structlog.get_logger(name)
+    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))
 
 
 def set_request_context(

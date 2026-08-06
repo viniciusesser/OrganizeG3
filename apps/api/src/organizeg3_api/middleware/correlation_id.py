@@ -61,7 +61,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
         if incoming_value:
             normalized_value = incoming_value.strip()
 
-            if normalized_value and len(normalized_value) <= 128:
+            if normalized_value and len(normalized_value) <= 128:  # noqa: PLR2004
                 return normalized_value
 
         return str(uuid.uuid4())

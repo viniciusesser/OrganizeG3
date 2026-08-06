@@ -24,7 +24,7 @@ class OrganizeG3Error(Exception):
 
 
 class ValidationError(OrganizeG3Error):
-    """Raised when submitted data violates an application rule."""
+    """Raised when submitted data violates a rule."""
 
     error_code = "validation.error"
     status_code = 422
@@ -38,17 +38,29 @@ class NotFoundError(OrganizeG3Error):
 
 
 class ConflictError(OrganizeG3Error):
-    """Raised when an operation conflicts with current state."""
+    """Raised when an operation conflicts with state."""
 
     error_code = "resource.conflict"
     status_code = 409
 
 
+class DuplicateCustomerError(ConflictError):
+    """Raised when customer identity data is already used."""
+
+    error_code = "customer.duplicate"
+
+
 class PermissionDeniedError(OrganizeG3Error):
-    """Raised when the authenticated actor lacks permission."""
+    """Raised when the actor lacks permission."""
 
     error_code = "authorization.permission_denied"
     status_code = 403
+
+
+class TenantUnavailableError(PermissionDeniedError):
+    """Raised when a tenant does not exist or cannot use the platform."""
+
+    error_code = "tenant.unavailable"
 
 
 class AuthenticationError(OrganizeG3Error):
@@ -71,13 +83,13 @@ class ConcurrencyError(ConflictError):
 
 
 class IdempotencyConflictError(ConflictError):
-    """Raised when an idempotency key is reused incompatibly."""
+    """Raised when an idempotency key is reused."""
 
     error_code = "idempotency.conflict"
 
 
 class ConfigurationError(OrganizeG3Error):
-    """Raised when the application configuration is invalid."""
+    """Raised when application configuration is invalid."""
 
     error_code = "configuration.error"
     status_code = 500

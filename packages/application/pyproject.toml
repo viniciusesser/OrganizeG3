@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "organizeg3-application"
 version = "0.1.0"
 description = "Casos de uso e orquestração da plataforma OrganizeG3."
-requires-python = ">=3.12"
+requires-python = ">=3.13,<3.14"
 license = "LicenseRef-Proprietary"
 
 dependencies = []
