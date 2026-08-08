@@ -75,6 +75,16 @@ class MaterialPermissions:
     REACTIVATE = "materials.reactivate"
 
 
+class ServicePermissions:
+    """Permission codes for service operations."""
+
+    READ = "services.read"
+    CREATE = "services.create"
+    UPDATE = "services.update"
+    DEACTIVATE = "services.deactivate"
+    REACTIVATE = "services.reactivate"
+
+
 PERMISSION_CATALOG = (
     PermissionDefinition(
         code=CustomerPermissions.READ,
@@ -300,6 +310,46 @@ PERMISSION_CATALOG = (
         action="reactivate",
         description="Permite reativar materiais do tenant.",
     ),
+    PermissionDefinition(
+        code=ServicePermissions.READ,
+        name="Visualizar serviços",
+        module="services",
+        resource="services",
+        action="read",
+        description="Permite consultar serviços do tenant.",
+    ),
+    PermissionDefinition(
+        code=ServicePermissions.CREATE,
+        name="Criar serviços",
+        module="services",
+        resource="services",
+        action="create",
+        description="Permite criar serviços no tenant.",
+    ),
+    PermissionDefinition(
+        code=ServicePermissions.UPDATE,
+        name="Atualizar serviços",
+        module="services",
+        resource="services",
+        action="update",
+        description="Permite atualizar serviços do tenant.",
+    ),
+    PermissionDefinition(
+        code=ServicePermissions.DEACTIVATE,
+        name="Desativar serviços",
+        module="services",
+        resource="services",
+        action="deactivate",
+        description="Permite desativar serviços do tenant.",
+    ),
+    PermissionDefinition(
+        code=ServicePermissions.REACTIVATE,
+        name="Reativar serviços",
+        module="services",
+        resource="services",
+        action="reactivate",
+        description="Permite reativar serviços do tenant.",
+    ),
 )
 
 
@@ -320,6 +370,7 @@ __all__ = [
     "EmployeePermissions",
     "MaterialPermissions",
     "PermissionDefinition",
+    "ServicePermissions",
     "SupplierPermissions",
     "permission_codes",
 ]
