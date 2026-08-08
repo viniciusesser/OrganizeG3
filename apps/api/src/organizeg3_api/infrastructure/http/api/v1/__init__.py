@@ -8,6 +8,7 @@ from organizeg3_api.infrastructure.http.api.v1 import (
     company,
     customers,
     employees,
+    materials,
     suppliers,
 )
 
@@ -35,6 +36,10 @@ router.include_router(
 
 router.include_router(
     suppliers.router
+)
+
+router.include_router(
+    materials.router
 )
 
 

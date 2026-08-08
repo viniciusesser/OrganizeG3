@@ -65,6 +65,16 @@ class SupplierPermissions:
     REACTIVATE = "suppliers.reactivate"
 
 
+class MaterialPermissions:
+    """Permission codes for material operations."""
+
+    READ = "materials.read"
+    CREATE = "materials.create"
+    UPDATE = "materials.update"
+    DEACTIVATE = "materials.deactivate"
+    REACTIVATE = "materials.reactivate"
+
+
 PERMISSION_CATALOG = (
     PermissionDefinition(
         code=CustomerPermissions.READ,
@@ -250,6 +260,46 @@ PERMISSION_CATALOG = (
         action="reactivate",
         description="Permite reativar fornecedores do tenant.",
     ),
+    PermissionDefinition(
+        code=MaterialPermissions.READ,
+        name="Visualizar materiais",
+        module="materials",
+        resource="materials",
+        action="read",
+        description="Permite consultar materiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=MaterialPermissions.CREATE,
+        name="Criar materiais",
+        module="materials",
+        resource="materials",
+        action="create",
+        description="Permite criar materiais no tenant.",
+    ),
+    PermissionDefinition(
+        code=MaterialPermissions.UPDATE,
+        name="Atualizar materiais",
+        module="materials",
+        resource="materials",
+        action="update",
+        description="Permite atualizar materiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=MaterialPermissions.DEACTIVATE,
+        name="Desativar materiais",
+        module="materials",
+        resource="materials",
+        action="deactivate",
+        description="Permite desativar materiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=MaterialPermissions.REACTIVATE,
+        name="Reativar materiais",
+        module="materials",
+        resource="materials",
+        action="reactivate",
+        description="Permite reativar materiais do tenant.",
+    ),
 )
 
 
@@ -268,6 +318,7 @@ __all__ = [
     "CompanyPermissions",
     "CustomerPermissions",
     "EmployeePermissions",
+    "MaterialPermissions",
     "PermissionDefinition",
     "SupplierPermissions",
     "permission_codes",

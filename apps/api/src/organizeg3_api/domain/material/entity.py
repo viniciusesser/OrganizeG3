@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from organizeg3_api.domain.material.value_objects import (
@@ -12,6 +12,35 @@ from organizeg3_api.domain.material.value_objects import (
     MaterialName,
     MaterialUnit,
 )
+
+
+def _next_timestamp(
+    previous: datetime | None,
+) -> datetime:
+    """Return a UTC timestamp strictly newer than the previous one."""
+
+    now = datetime.now(UTC)
+
+    if previous is None:
+        return now
+
+    normalized_previous = previous
+
+    if normalized_previous.tzinfo is None:
+        normalized_previous = normalized_previous.replace(
+            tzinfo=UTC
+        )
+    else:
+        normalized_previous = (
+            normalized_previous.astimezone(UTC)
+        )
+
+    if now > normalized_previous:
+        return now
+
+    return normalized_previous + timedelta(
+        microseconds=1
+    )
 
 
 @dataclass(slots=True)
@@ -25,11 +54,8 @@ class Material:
     unit: str
 
     id: uuid.UUID | None = None
-
     brand_id: uuid.UUID | None = None
-
     is_active: bool = True
-
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -97,6 +123,36 @@ class Material:
             updated_at=now,
         )
 
+    def update_details(
+        self,
+        *,
+        code: str,
+        name: str,
+        category: str,
+        unit: str,
+        brand_id: uuid.UUID | None,
+    ) -> None:
+        """Atomically validate and update editable material data."""
+
+        candidate = replace(
+            self,
+            code=code,
+            name=name,
+            category=category,
+            unit=unit,
+            brand_id=brand_id,
+            updated_at=_next_timestamp(
+                self.updated_at
+            ),
+        )
+
+        self.code = candidate.code
+        self.name = candidate.name
+        self.category = candidate.category
+        self.unit = candidate.unit
+        self.brand_id = candidate.brand_id
+        self.updated_at = candidate.updated_at
+
     def assign_brand(
         self,
         brand_id: uuid.UUID,
@@ -163,4 +219,6 @@ class Material:
             )
 
     def _touch(self) -> None:
-        self.updated_at = datetime.now(UTC)
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )
