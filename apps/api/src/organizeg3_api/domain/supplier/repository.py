@@ -31,9 +31,48 @@ class SupplierRepository(Protocol):
         """Return one supplier by CPF or CNPJ."""
         ...
 
+    def list_all(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        include_inactive: bool = False,
+        search: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Supplier]:
+        """List tenant suppliers using optional filters."""
+        ...
+
+    def exists_by_code(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        code: str,
+        exclude_supplier_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether the normalized code is already used."""
+        ...
+
+    def exists_by_document(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        document_number: str,
+        exclude_supplier_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether a document is already used."""
+        ...
+
     def add(
         self,
         supplier: Supplier,
     ) -> Supplier:
         """Persist a new supplier."""
+        ...
+
+    def save(
+        self,
+        supplier: Supplier,
+    ) -> Supplier:
+        """Persist changes to an existing supplier."""
         ...

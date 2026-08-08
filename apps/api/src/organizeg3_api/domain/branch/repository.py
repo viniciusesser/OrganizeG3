@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Protocol
 import uuid
 
@@ -31,9 +32,48 @@ class BranchRepository(Protocol):
         """Return one branch belonging to the tenant."""
         ...
 
+    def list_all(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        include_inactive: bool = False,
+        search: str | None = None,
+        is_headquarters: bool | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Sequence[Branch]:
+        """List branches within one tenant boundary."""
+        ...
+
+    def exists_by_code(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        code: str,
+        exclude_branch_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether a normalized code already exists."""
+        ...
+
+    def exists_headquarters_for_tenant(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        exclude_branch_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether the tenant already has a headquarters branch."""
+        ...
+
     def add(
         self,
         branch: Branch,
     ) -> Branch:
         """Persist a new branch."""
+        ...
+
+    def save(
+        self,
+        branch: Branch,
+    ) -> Branch:
+        """Persist changes to an existing branch."""
         ...

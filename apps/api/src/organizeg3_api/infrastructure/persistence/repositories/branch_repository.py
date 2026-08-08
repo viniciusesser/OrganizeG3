@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from typing import cast
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from organizeg3_api.core.exceptions import (
+    NotFoundError,
+)
 from organizeg3_api.domain.branch.entity import (
     Branch,
 )
@@ -95,6 +100,172 @@ class SQLAlchemyBranchRepository(
             model
         )
 
+    def list_all(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        include_inactive: bool = False,
+        search: str | None = None,
+        is_headquarters: bool | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Sequence[Branch]:
+        """List branches within one tenant boundary."""
+
+        statement = select(
+            BranchModel
+        ).where(
+            BranchModel.tenant_id
+            == tenant_id
+        )
+
+        if not include_inactive:
+            statement = statement.where(
+                BranchModel.is_active
+                .is_(True)
+            )
+
+        if is_headquarters is not None:
+            statement = statement.where(
+                BranchModel.is_headquarters
+                .is_(is_headquarters)
+            )
+
+        normalized_search = (
+            search.strip().lower()
+            if search is not None
+            else ""
+        )
+
+        if normalized_search:
+            statement = statement.where(
+                or_(
+                    func.lower(
+                        BranchModel.code
+                    ).contains(
+                        normalized_search,
+                        autoescape=True,
+                    ),
+                    func.lower(
+                        BranchModel.name
+                    ).contains(
+                        normalized_search,
+                        autoescape=True,
+                    ),
+                    func.lower(
+                        BranchModel.legal_name
+                    ).contains(
+                        normalized_search,
+                        autoescape=True,
+                    ),
+                    func.lower(
+                        BranchModel.document_number
+                    ).contains(
+                        normalized_search,
+                        autoescape=True,
+                    ),
+                    func.lower(
+                        BranchModel.email
+                    ).contains(
+                        normalized_search,
+                        autoescape=True,
+                    ),
+                )
+            )
+
+        statement = (
+            statement
+            .order_by(
+                BranchModel.is_headquarters.desc(),
+                BranchModel.code.asc(),
+                BranchModel.id.asc(),
+            )
+            .limit(limit)
+            .offset(offset)
+        )
+
+        models = self._session.scalars(
+            statement
+        ).all()
+
+        return [
+            self._to_domain(model)
+            for model in models
+        ]
+
+    def exists_by_code(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        code: str,
+        exclude_branch_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether a normalized code already exists."""
+
+        normalized_code = (
+            code.strip().lower()
+        )
+
+        statement = select(
+            BranchModel.id
+        ).where(
+            BranchModel.tenant_id
+            == tenant_id,
+            func.lower(
+                func.trim(
+                    BranchModel.code
+                )
+            )
+            == normalized_code,
+        )
+
+        if exclude_branch_id is not None:
+            statement = statement.where(
+                BranchModel.id
+                != exclude_branch_id
+            )
+
+        statement = statement.limit(1)
+
+        return (
+            self._session.scalar(
+                statement
+            )
+            is not None
+        )
+
+    def exists_headquarters_for_tenant(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        exclude_branch_id: uuid.UUID | None = None,
+    ) -> bool:
+        """Return whether the tenant already has a headquarters branch."""
+
+        statement = select(
+            BranchModel.id
+        ).where(
+            BranchModel.tenant_id
+            == tenant_id,
+            BranchModel.is_headquarters
+            .is_(True),
+        )
+
+        if exclude_branch_id is not None:
+            statement = statement.where(
+                BranchModel.id
+                != exclude_branch_id
+            )
+
+        statement = statement.limit(1)
+
+        return (
+            self._session.scalar(
+                statement
+            )
+            is not None
+        )
+
     def add(
         self,
         branch: Branch,
@@ -131,6 +302,66 @@ class SQLAlchemyBranchRepository(
         self._session.add(
             model
         )
+        self._session.flush()
+
+        return self._to_domain(
+            model
+        )
+
+    def save(
+        self,
+        branch: Branch,
+    ) -> Branch:
+        """Persist changes to an existing branch."""
+
+        if branch.id is None:
+            raise ValueError(
+                "A filial deve possuir identificador para ser atualizada."
+            )
+
+        statement = select(
+            BranchModel
+        ).where(
+            BranchModel.id
+            == branch.id,
+            BranchModel.tenant_id
+            == branch.tenant_id,
+        )
+
+        model = self._session.scalar(
+            statement
+        )
+
+        if model is None:
+            raise NotFoundError(
+                "Filial não encontrada."
+            )
+
+        model.code = branch.code
+        model.name = branch.name
+        model.legal_name = branch.legal_name
+        model.document_number = branch.document_number
+        model.state_registration = (
+            branch.state_registration
+        )
+        model.email = branch.email
+        model.phone = branch.phone
+        model.website = branch.website
+        model.street = branch.street
+        model.number = branch.number
+        model.district = branch.district
+        model.city = branch.city
+        model.state = branch.state
+        model.postal_code = branch.postal_code
+        model.is_headquarters = (
+            branch.is_headquarters
+        )
+        model.is_active = branch.is_active
+        model.updated_at = (
+            branch.updated_at
+            or datetime.now(UTC)
+        )
+
         self._session.flush()
 
         return self._to_domain(

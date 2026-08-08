@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, fields, replace
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from organizeg3_api.domain.supplier.value_objects import (
@@ -15,6 +15,36 @@ from organizeg3_api.domain.supplier.value_objects import (
     SupplierState,
     normalize_optional_text,
 )
+
+
+def _next_timestamp(
+    previous: datetime | None,
+) -> datetime:
+    """Return a timestamp strictly newer than the previous one."""
+
+    now = datetime.now(UTC)
+
+    if previous is None:
+        return now
+
+    comparable_previous = previous
+
+    if comparable_previous.tzinfo is None:
+        comparable_previous = (
+            comparable_previous.replace(
+                tzinfo=UTC
+            )
+        )
+
+    if now <= comparable_previous:
+        return (
+            comparable_previous
+            + timedelta(
+                microseconds=1
+            )
+        )
+
+    return now
 
 
 @dataclass(slots=True)
@@ -205,6 +235,68 @@ class Supplier:
             updated_at=now,
         )
 
+    def update_details(
+        self,
+        *,
+        code: str,
+        name: str,
+        trade_name: str | None,
+        legal_name: str | None,
+        document_number: str | None,
+        state_registration: str | None,
+        email: str | None,
+        invoice_email: str | None,
+        phone: str | None,
+        secondary_phone: str | None,
+        website: str | None,
+        contact_name: str | None,
+        postal_code: str | None,
+        street: str | None,
+        number: str | None,
+        district: str | None,
+        city: str | None,
+        state: str | None,
+    ) -> None:
+        """Atomically validate and update supplier details."""
+
+        updated_supplier = replace(
+            self,
+            code=code,
+            name=name,
+            trade_name=trade_name,
+            legal_name=legal_name,
+            document_number=document_number,
+            state_registration=state_registration,
+            email=email,
+            invoice_email=invoice_email,
+            phone=phone,
+            secondary_phone=secondary_phone,
+            website=website,
+            contact_name=contact_name,
+            postal_code=postal_code,
+            street=street,
+            number=number,
+            district=district,
+            city=city,
+            state=state,
+        )
+
+        updated_supplier.updated_at = (
+            _next_timestamp(
+                self.updated_at
+            )
+        )
+
+        for field in fields(self):
+            setattr(
+                self,
+                field.name,
+                getattr(
+                    updated_supplier,
+                    field.name,
+                ),
+            )
+
     def deactivate(self) -> None:
         """Deactivate the supplier."""
 
@@ -320,4 +412,6 @@ class Supplier:
         ).value
 
     def _touch(self) -> None:
-        self.updated_at = datetime.now(UTC)
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )

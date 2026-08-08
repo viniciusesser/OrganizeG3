@@ -1,6 +1,20 @@
-"""Canonical permission codes used by OrganizeG3 authorization."""
+"""Canonical permission definitions used by OrganizeG3 authorization."""
 
 from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, slots=True)
+class PermissionDefinition:
+    """Describe one canonical application permission."""
+
+    code: str
+    name: str
+    module: str
+    resource: str
+    action: str
+    description: str | None = None
 
 
 class CustomerPermissions:
@@ -13,6 +27,248 @@ class CustomerPermissions:
     REACTIVATE = "customers.reactivate"
 
 
+class CompanyPermissions:
+    """Permission codes for company operations."""
+
+    READ = "company.read"
+    CREATE = "company.create"
+    UPDATE = "company.update"
+
+
+class BranchPermissions:
+    """Permission codes for branch operations."""
+
+    READ = "branches.read"
+    CREATE = "branches.create"
+    UPDATE = "branches.update"
+    DEACTIVATE = "branches.deactivate"
+    REACTIVATE = "branches.reactivate"
+
+
+class EmployeePermissions:
+    """Permission codes for employee operations."""
+
+    READ = "employees.read"
+    CREATE = "employees.create"
+    UPDATE = "employees.update"
+    DEACTIVATE = "employees.deactivate"
+    REACTIVATE = "employees.reactivate"
+
+
+class SupplierPermissions:
+    """Permission codes for supplier operations."""
+
+    READ = "suppliers.read"
+    CREATE = "suppliers.create"
+    UPDATE = "suppliers.update"
+    DEACTIVATE = "suppliers.deactivate"
+    REACTIVATE = "suppliers.reactivate"
+
+
+PERMISSION_CATALOG = (
+    PermissionDefinition(
+        code=CustomerPermissions.READ,
+        name="Visualizar clientes",
+        module="customers",
+        resource="customers",
+        action="read",
+        description="Permite consultar clientes do tenant.",
+    ),
+    PermissionDefinition(
+        code=CustomerPermissions.CREATE,
+        name="Criar clientes",
+        module="customers",
+        resource="customers",
+        action="create",
+        description="Permite criar clientes no tenant.",
+    ),
+    PermissionDefinition(
+        code=CustomerPermissions.UPDATE,
+        name="Atualizar clientes",
+        module="customers",
+        resource="customers",
+        action="update",
+        description="Permite atualizar clientes do tenant.",
+    ),
+    PermissionDefinition(
+        code=CustomerPermissions.ARCHIVE,
+        name="Arquivar clientes",
+        module="customers",
+        resource="customers",
+        action="archive",
+        description="Permite arquivar clientes do tenant.",
+    ),
+    PermissionDefinition(
+        code=CustomerPermissions.REACTIVATE,
+        name="Reativar clientes",
+        module="customers",
+        resource="customers",
+        action="reactivate",
+        description="Permite reativar clientes do tenant.",
+    ),
+    PermissionDefinition(
+        code=CompanyPermissions.READ,
+        name="Visualizar empresa",
+        module="company",
+        resource="company",
+        action="read",
+        description="Permite consultar os dados da empresa do tenant.",
+    ),
+    PermissionDefinition(
+        code=CompanyPermissions.CREATE,
+        name="Criar empresa",
+        module="company",
+        resource="company",
+        action="create",
+        description="Permite criar os dados da empresa do tenant.",
+    ),
+    PermissionDefinition(
+        code=CompanyPermissions.UPDATE,
+        name="Atualizar empresa",
+        module="company",
+        resource="company",
+        action="update",
+        description="Permite atualizar os dados da empresa do tenant.",
+    ),
+    PermissionDefinition(
+        code=BranchPermissions.READ,
+        name="Visualizar filiais",
+        module="branches",
+        resource="branches",
+        action="read",
+        description="Permite consultar filiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=BranchPermissions.CREATE,
+        name="Criar filiais",
+        module="branches",
+        resource="branches",
+        action="create",
+        description="Permite criar filiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=BranchPermissions.UPDATE,
+        name="Atualizar filiais",
+        module="branches",
+        resource="branches",
+        action="update",
+        description="Permite atualizar filiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=BranchPermissions.DEACTIVATE,
+        name="Desativar filiais",
+        module="branches",
+        resource="branches",
+        action="deactivate",
+        description="Permite desativar filiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=BranchPermissions.REACTIVATE,
+        name="Reativar filiais",
+        module="branches",
+        resource="branches",
+        action="reactivate",
+        description="Permite reativar filiais do tenant.",
+    ),
+    PermissionDefinition(
+        code=EmployeePermissions.READ,
+        name="Visualizar funcionários",
+        module="employees",
+        resource="employees",
+        action="read",
+        description="Permite consultar funcionários do tenant.",
+    ),
+    PermissionDefinition(
+        code=EmployeePermissions.CREATE,
+        name="Criar funcionários",
+        module="employees",
+        resource="employees",
+        action="create",
+        description="Permite criar funcionários no tenant.",
+    ),
+    PermissionDefinition(
+        code=EmployeePermissions.UPDATE,
+        name="Atualizar funcionários",
+        module="employees",
+        resource="employees",
+        action="update",
+        description="Permite atualizar funcionários do tenant.",
+    ),
+    PermissionDefinition(
+        code=EmployeePermissions.DEACTIVATE,
+        name="Desativar funcionários",
+        module="employees",
+        resource="employees",
+        action="deactivate",
+        description="Permite desativar funcionários do tenant.",
+    ),
+    PermissionDefinition(
+        code=EmployeePermissions.REACTIVATE,
+        name="Reativar funcionários",
+        module="employees",
+        resource="employees",
+        action="reactivate",
+        description="Permite reativar funcionários do tenant.",
+    ),
+    PermissionDefinition(
+        code=SupplierPermissions.READ,
+        name="Visualizar fornecedores",
+        module="suppliers",
+        resource="suppliers",
+        action="read",
+        description="Permite consultar fornecedores do tenant.",
+    ),
+    PermissionDefinition(
+        code=SupplierPermissions.CREATE,
+        name="Criar fornecedores",
+        module="suppliers",
+        resource="suppliers",
+        action="create",
+        description="Permite criar fornecedores no tenant.",
+    ),
+    PermissionDefinition(
+        code=SupplierPermissions.UPDATE,
+        name="Atualizar fornecedores",
+        module="suppliers",
+        resource="suppliers",
+        action="update",
+        description="Permite atualizar fornecedores do tenant.",
+    ),
+    PermissionDefinition(
+        code=SupplierPermissions.DEACTIVATE,
+        name="Desativar fornecedores",
+        module="suppliers",
+        resource="suppliers",
+        action="deactivate",
+        description="Permite desativar fornecedores do tenant.",
+    ),
+    PermissionDefinition(
+        code=SupplierPermissions.REACTIVATE,
+        name="Reativar fornecedores",
+        module="suppliers",
+        resource="suppliers",
+        action="reactivate",
+        description="Permite reativar fornecedores do tenant.",
+    ),
+)
+
+
+def permission_codes() -> frozenset[str]:
+    """Return every canonical permission code."""
+
+    return frozenset(
+        permission.code
+        for permission in PERMISSION_CATALOG
+    )
+
+
 __all__ = [
+    "PERMISSION_CATALOG",
+    "BranchPermissions",
+    "CompanyPermissions",
     "CustomerPermissions",
+    "EmployeePermissions",
+    "PermissionDefinition",
+    "SupplierPermissions",
+    "permission_codes",
 ]

@@ -4,7 +4,11 @@ from fastapi import APIRouter
 
 from organizeg3_api.infrastructure.http.api.v1 import (
     auth,
+    branches,
+    company,
     customers,
+    employees,
+    suppliers,
 )
 
 router = APIRouter()
@@ -14,8 +18,25 @@ router.include_router(
 )
 
 router.include_router(
+    company.router
+)
+
+router.include_router(
+    branches.router
+)
+
+router.include_router(
     customers.router
 )
+
+router.include_router(
+    employees.router
+)
+
+router.include_router(
+    suppliers.router
+)
+
 
 __all__ = [
     "router",

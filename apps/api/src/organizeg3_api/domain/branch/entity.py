@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from organizeg3_api.domain.branch.value_objects import (
@@ -15,6 +15,36 @@ from organizeg3_api.domain.branch.value_objects import (
     BranchState,
     normalize_optional_text,
 )
+
+
+def _next_timestamp(
+    previous: datetime | None,
+) -> datetime:
+    """Return a UTC timestamp strictly newer than the previous value."""
+
+    now = datetime.now(UTC)
+
+    if previous is None:
+        return now
+
+    comparable_previous = previous
+
+    if comparable_previous.tzinfo is None:
+        comparable_previous = (
+            comparable_previous.replace(
+                tzinfo=UTC
+            )
+        )
+
+    if now <= comparable_previous:
+        return (
+            comparable_previous
+            + timedelta(
+                microseconds=1
+            )
+        )
+
+    return now
 
 
 @dataclass(slots=True)
@@ -253,6 +283,72 @@ class Branch:
             updated_at=now,
         )
 
+    def update_details(
+        self,
+        *,
+        code: str,
+        name: str,
+        legal_name: str | None,
+        document_number: str | None,
+        state_registration: str | None,
+        email: str | None,
+        phone: str | None,
+        website: str | None,
+        street: str | None,
+        number: str | None,
+        district: str | None,
+        city: str | None,
+        state: str | None,
+        postal_code: str | None,
+        is_headquarters: bool,
+    ) -> None:
+        """Update editable branch details atomically."""
+
+        candidate = replace(
+            self,
+            code=code,
+            name=name,
+            legal_name=legal_name,
+            document_number=document_number,
+            state_registration=state_registration,
+            email=email,
+            phone=phone,
+            website=website,
+            street=street,
+            number=number,
+            district=district,
+            city=city,
+            state=state,
+            postal_code=postal_code,
+            is_headquarters=is_headquarters,
+            updated_at=_next_timestamp(
+                self.updated_at
+            ),
+        )
+
+        self.code = candidate.code
+        self.name = candidate.name
+        self.legal_name = candidate.legal_name
+        self.document_number = (
+            candidate.document_number
+        )
+        self.state_registration = (
+            candidate.state_registration
+        )
+        self.email = candidate.email
+        self.phone = candidate.phone
+        self.website = candidate.website
+        self.street = candidate.street
+        self.number = candidate.number
+        self.district = candidate.district
+        self.city = candidate.city
+        self.state = candidate.state
+        self.postal_code = candidate.postal_code
+        self.is_headquarters = (
+            candidate.is_headquarters
+        )
+        self.updated_at = candidate.updated_at
+
     def deactivate(self) -> None:
         """Deactivate the branch."""
 
@@ -260,7 +356,9 @@ class Branch:
             return
 
         self.is_active = False
-        self.updated_at = datetime.now(UTC)
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )
 
     def activate(self) -> None:
         """Reactivate the branch."""
@@ -269,4 +367,6 @@ class Branch:
             return
 
         self.is_active = True
-        self.updated_at = datetime.now(UTC)
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )

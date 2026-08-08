@@ -9,6 +9,7 @@ import uuid
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from organizeg3_api.application.identity.exceptions import (
@@ -138,6 +139,49 @@ def create_test_user(
     return user
 
 
+def _get_or_create_permission(
+    session: Session,
+    *,
+    permission_code: str,
+) -> PermissionModel:
+    """Return one canonical permission row for a test code."""
+
+    permission = session.scalar(
+        select(PermissionModel).where(
+            PermissionModel.code
+            == permission_code
+        )
+    )
+
+    if permission is not None:
+        return permission
+
+    resource = permission_code.split(
+        ".",
+        maxsplit=1,
+    )[0]
+
+    action = permission_code.rsplit(
+        ".",
+        maxsplit=1,
+    )[-1]
+
+    permission = PermissionModel(
+        id=uuid.uuid4(),
+        code=permission_code,
+        name=permission_code,
+        module=resource,
+        resource=resource,
+        action=action,
+        is_active=True,
+    )
+
+    session.add(permission)
+    session.flush()
+
+    return permission
+
+
 def grant_permissions(
     session: Session,
     *,
@@ -160,21 +204,10 @@ def grant_permissions(
     session.flush()
 
     for permission_code in permission_codes:
-        permission = PermissionModel(
-            id=uuid.uuid4(),
-            code=permission_code,
-            name=permission_code,
-            module="customers",
-            resource="customers",
-            action=permission_code.rsplit(
-                ".",
-                maxsplit=1,
-            )[-1],
-            is_active=True,
+        permission = _get_or_create_permission(
+            session,
+            permission_code=permission_code,
         )
-
-        session.add(permission)
-        session.flush()
 
         session.add(
             AccessProfilePermissionModel(

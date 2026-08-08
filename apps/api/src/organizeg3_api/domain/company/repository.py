@@ -5,13 +5,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import uuid
 
-from organizeg3_api.domain.company.entity import (
-    Company,
-)
+from organizeg3_api.domain.company.entity import Company
 
 
 class ICompanyRepository(ABC):
-    """Expose company operations required by the domain layer."""
+    """Expose company operations required by the application layer."""
 
     @abstractmethod
     def get_by_tenant(
@@ -26,3 +24,10 @@ class ICompanyRepository(ABC):
         company: Company,
     ) -> Company:
         """Persist a new company."""
+
+    @abstractmethod
+    def save(
+        self,
+        company: Company,
+    ) -> Company:
+        """Persist changes to an existing company."""

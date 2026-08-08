@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import cast
 import uuid
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from organizeg3_api.domain.company.entity import (
-    Company,
-)
-from organizeg3_api.domain.company.repository import (
-    ICompanyRepository,
-)
+from organizeg3_api.core.exceptions import NotFoundError
+from organizeg3_api.domain.company.entity import Company
+from organizeg3_api.domain.company.repository import ICompanyRepository
 from organizeg3_api.infrastructure.persistence.models.company import (
     CompanyModel,
 )
@@ -92,6 +90,68 @@ class SQLAlchemyCompanyRepository(
         self._session.add(
             model
         )
+        self._session.flush()
+
+        return self._to_domain(
+            model
+        )
+
+    def save(
+        self,
+        company: Company,
+    ) -> Company:
+        """Persist changes to an existing company."""
+
+        if company.id is None:
+            raise ValueError(
+                "A empresa precisa possuir identificador para ser atualizada."
+            )
+
+        statement = (
+            select(CompanyModel)
+            .where(
+                CompanyModel.id
+                == company.id,
+                CompanyModel.tenant_id
+                == company.tenant_id,
+            )
+            .limit(1)
+        )
+
+        model = (
+            self._session.execute(
+                statement
+            )
+            .scalar_one_or_none()
+        )
+
+        if model is None:
+            raise NotFoundError(
+                "Empresa não encontrada."
+            )
+
+        model.trade_name = company.trade_name
+        model.legal_name = company.legal_name
+        model.document_number = company.document_number
+        model.state_registration = (
+            company.state_registration
+        )
+        model.email = company.email
+        model.phone = company.phone
+        model.website = company.website
+        model.logo_path = company.logo_path
+        model.street = company.street
+        model.number = company.number
+        model.district = company.district
+        model.city = company.city
+        model.state = company.state
+        model.postal_code = company.postal_code
+        model.is_active = company.is_active
+        model.updated_at = (
+            company.updated_at
+            or datetime.now(UTC)
+        )
+
         self._session.flush()
 
         return self._to_domain(
