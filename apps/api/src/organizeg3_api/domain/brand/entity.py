@@ -2,14 +2,39 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from organizeg3_api.domain.brand.value_objects import (
     BrandCode,
     BrandName,
 )
+
+
+def _next_timestamp(
+    previous: datetime | None,
+) -> datetime:
+    """Return a UTC timestamp strictly newer than the previous value."""
+
+    now = datetime.now(UTC)
+
+    if previous is None:
+        return now
+
+    comparable_previous = previous
+
+    if comparable_previous.tzinfo is None:
+        comparable_previous = comparable_previous.replace(
+            tzinfo=UTC
+        )
+
+    if now <= comparable_previous:
+        return comparable_previous + timedelta(
+            microseconds=1
+        )
+
+    return now
 
 
 @dataclass(slots=True)
@@ -71,6 +96,27 @@ class Brand:
             updated_at=now,
         )
 
+    def update_details(
+        self,
+        *,
+        code: str,
+        name: str,
+    ) -> None:
+        """Update editable brand details atomically."""
+
+        candidate = replace(
+            self,
+            code=code,
+            name=name,
+            updated_at=_next_timestamp(
+                self.updated_at
+            ),
+        )
+
+        self.code = candidate.code
+        self.name = candidate.name
+        self.updated_at = candidate.updated_at
+
     def deactivate(self) -> None:
         """Deactivate the brand."""
 
@@ -78,7 +124,9 @@ class Brand:
             return
 
         self.is_active = False
-        self._touch()
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )
 
     def activate(self) -> None:
         """Reactivate the brand."""
@@ -87,7 +135,9 @@ class Brand:
             return
 
         self.is_active = True
-        self._touch()
+        self.updated_at = _next_timestamp(
+            self.updated_at
+        )
 
     @staticmethod
     def _validate_uuid(
@@ -95,6 +145,8 @@ class Brand:
         *,
         field_name: str,
     ) -> None:
+        """Validate one required non-null UUID."""
+
         if not isinstance(
             value,
             uuid.UUID,
@@ -109,6 +161,3 @@ class Brand:
                 f"O {field_name} da marca "
                 "não pode possuir UUID nulo."
             )
-
-    def _touch(self) -> None:
-        self.updated_at = datetime.now(UTC)

@@ -96,6 +96,16 @@ class MachinePermissions:
     REACTIVATE = "machines.reactivate"
 
 
+class BrandPermissions:
+    """Permission codes for brand operations."""
+
+    READ = "brands.read"
+    CREATE = "brands.create"
+    UPDATE = "brands.update"
+    DEACTIVATE = "brands.deactivate"
+    REACTIVATE = "brands.reactivate"
+
+
 PERMISSION_CATALOG = (
     PermissionDefinition(
         code=CustomerPermissions.READ,
@@ -409,6 +419,46 @@ PERMISSION_CATALOG = (
         action="reactivate",
         description="Permite reativar máquinas do tenant.",
     ),
+    PermissionDefinition(
+        code=BrandPermissions.READ,
+        name="Visualizar marcas",
+        module="brands",
+        resource="brands",
+        action="read",
+        description="Permite consultar marcas do tenant.",
+    ),
+    PermissionDefinition(
+        code=BrandPermissions.CREATE,
+        name="Criar marcas",
+        module="brands",
+        resource="brands",
+        action="create",
+        description="Permite criar marcas no tenant.",
+    ),
+    PermissionDefinition(
+        code=BrandPermissions.UPDATE,
+        name="Atualizar marcas",
+        module="brands",
+        resource="brands",
+        action="update",
+        description="Permite atualizar marcas do tenant.",
+    ),
+    PermissionDefinition(
+        code=BrandPermissions.DEACTIVATE,
+        name="Desativar marcas",
+        module="brands",
+        resource="brands",
+        action="deactivate",
+        description="Permite desativar marcas do tenant.",
+    ),
+    PermissionDefinition(
+        code=BrandPermissions.REACTIVATE,
+        name="Reativar marcas",
+        module="brands",
+        resource="brands",
+        action="reactivate",
+        description="Permite reativar marcas do tenant.",
+    ),
 )
 
 
@@ -424,6 +474,7 @@ def permission_codes() -> frozenset[str]:
 __all__ = [
     "PERMISSION_CATALOG",
     "BranchPermissions",
+    "BrandPermissions",
     "CompanyPermissions",
     "CustomerPermissions",
     "EmployeePermissions",
