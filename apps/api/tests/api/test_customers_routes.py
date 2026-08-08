@@ -1,19 +1,34 @@
 """HTTP contract tests for customer routes."""
 
+from __future__ import annotations
+
 import uuid
 
 from fastapi.testclient import TestClient
 import pytest
+from tests.helpers.authentication import (
+    TEST_ACCESS_TOKEN,
+    authentication_headers,
+)
 
 pytestmark = pytest.mark.api
+
+
+@pytest.fixture(autouse=True)
+def authorize_customer_requests(
+    authenticated_customer_client: TestClient,
+) -> None:
+    """Authorize customer requests for this test module."""
 
 
 def tenant_headers(
     tenant_id: uuid.UUID,
 ) -> dict[str, str]:
-    return {
-        "X-Tenant-ID": str(tenant_id),
-    }
+    """Build authenticated tenant headers."""
+
+    return authentication_headers(
+        tenant_id
+    )
 
 
 def test_health_endpoint(
@@ -31,7 +46,9 @@ def test_customer_route_is_registered(
 ) -> None:
     response = client.get(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
     )
 
     assert response.status_code == 200
@@ -43,7 +60,9 @@ def test_creates_customer(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Cliente API",
             "customer_type": "CORPORATE",
@@ -55,7 +74,10 @@ def test_creates_customer(
 
     body = response.json()
 
-    assert body["tenant_id"] == str(tenant_id)
+    assert body["tenant_id"] == str(
+        tenant_id
+    )
+
     assert body["name"] == "Cliente API"
     assert body["code"].startswith("CUST-")
     assert body["row_version"] == 1
@@ -66,25 +88,35 @@ def test_lists_only_header_tenant(
     tenant_id: uuid.UUID,
     other_tenant_id: uuid.UUID,
 ) -> None:
-    client.post(
+    first_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Cliente A",
         },
     )
 
-    client.post(
+    assert first_response.status_code == 201
+
+    second_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(other_tenant_id),
+        headers=tenant_headers(
+            other_tenant_id
+        ),
         json={
             "name": "Cliente B",
         },
     )
 
+    assert second_response.status_code == 201
+
     response = client.get(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
     )
 
     assert response.status_code == 200
@@ -100,6 +132,11 @@ def test_rejects_missing_tenant_header(
 ) -> None:
     response = client.get(
         "/api/v1/customers",
+        headers={
+            "Authorization": (
+                f"Bearer {TEST_ACCESS_TOKEN}"
+            ),
+        },
     )
 
     assert response.status_code == 422
@@ -116,6 +153,9 @@ def test_rejects_invalid_tenant_header(
     response = client.get(
         "/api/v1/customers",
         headers={
+            "Authorization": (
+                f"Bearer {TEST_ACCESS_TOKEN}"
+            ),
             "X-Tenant-ID": "invalid",
         },
     )
@@ -134,9 +174,13 @@ def test_rejects_tenant_in_request_body(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
-            "tenant_id": str(uuid.uuid4()),
+            "tenant_id": str(
+                uuid.uuid4()
+            ),
             "name": "Cliente Inválido",
         },
     )
@@ -155,7 +199,9 @@ def test_returns_standard_validation_error(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "",
         },
@@ -192,7 +238,9 @@ def create_customer_for_query_tests(
 
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json=payload,
     )
 
@@ -213,7 +261,9 @@ def test_gets_customer_by_id(
 
     response = client.get(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
     )
 
     assert response.status_code == 200
@@ -237,7 +287,9 @@ def test_does_not_get_customer_from_other_tenant(
 
     response = client.get(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(other_tenant_id),
+        headers=tenant_headers(
+            other_tenant_id
+        ),
     )
 
     assert response.status_code == 404
@@ -274,7 +326,9 @@ def test_searches_filters_and_paginates_customers(
 
     response = client.get(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         params={
             "search": "Empresa",
             "customer_type": "CORPORATE",

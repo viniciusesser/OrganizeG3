@@ -7,18 +7,21 @@
 | Propriedade | Valor |
 |---|---|
 | Documento | `ORGANIZEG3_DESIGN_SYSTEM_VISUAL_OFICIAL.md` |
-| Versão | `1.0.0` |
-| Data | 2026-08-05 |
+| Versão | `1.1.0` |
+| Data | 2026-08-08 |
 | Status | Proposta visual oficial para validação |
 | Nome da direção visual | Industrial Clarity |
-| Aplicação inicial | Desktop Windows com PySide6 |
-| Aplicação futura | PWA React |
-| Fonte de ícones | Icons8 |
-| Família primária de ícones | Windows 11 Outline |
-| Família complementar | Windows 11 Filled, apenas para estados ativos equivalentes |
+| Aplicação oficial | React/PWA responsivo para desktop, notebook, tablet e celular |
+| Distribuição desktop | PWA instalada; Tauri somente por ADR futuro |
+| Fonte de ícones | Lucide React |
+| Família primária de ícones | Lucide Outline |
+| Família complementar | Não adotar outra família sem ADR |
 | Temas | Claro e Escuro |
 | Densidade padrão | Confortável |
 | Unidade-base | 4 px |
+
+> Decisão arquitetural vigente: `ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md`.
+> Referências anteriores a PySide6/Qt Widgets ou PWA como etapa futura estão substituídas por esta decisão.
 
 ---
 
@@ -33,8 +36,8 @@ Ele será a referência obrigatória para:
 - designers;
 - revisores;
 - testes visuais;
-- Desktop PySide6;
-- PWA futura;
+- frontend React/PWA responsivo;
+- desktop, notebook, tablet e celular;
 - documentos e relatórios;
 - gráficos;
 - componentes compartilhados;
@@ -417,7 +420,7 @@ A cor exata será obtida pelo mapa de status central, nunca pela página.
 
 ## 11.1 Família oficial
 
-Desktop Windows:
+Desktop e notebook:
 
 ```text
 Segoe UI Variable
@@ -718,52 +721,36 @@ A densidade poderá ser configurada pelo usuário.
 
 ## 22.1 Origem
 
-Os ícones serão baixados do Icons8.
-
-Família primária:
+A biblioteca oficial de ícones da aplicação será:
 
 ```text
-Windows 11 Outline
+Lucide React
 ```
 
-Família complementar:
+Os ícones são SVG vetoriais e devem ser importados como componentes React.
 
-```text
-Windows 11 Filled
-```
+Não baixar arquivos individuais para cada tela quando houver equivalente oficial na biblioteca.
 
-A família Filled será utilizada apenas quando houver equivalente exato e o estado ativo realmente exigir preenchimento.
+Tamanhos, espessuras, cores e estados devem ser controlados por `theme_design`.
+
+A biblioteca não autoriza valores visuais hardcoded em componentes de feature.
 
 ---
 
 # 23. Regras de iconografia
 
-1. Não misturar famílias de ícones na mesma interface.
-
-2. Utilizar SVG sempre que disponível.
-
-3. Utilizar PNG apenas quando SVG não estiver disponível ou permitido.
-
+1. Utilizar Lucide como família padrão da aplicação.
+2. Utilizar SVG vetorial.
+3. Não utilizar PNG para ícones funcionais comuns.
 4. Ícones serão monocromáticos por padrão.
-
-5. A cor virá do estado do componente.
-
+5. A cor virá do estado e dos tokens do componente.
 6. Não alterar proporção.
-
 7. Não adicionar sombra ao ícone.
-
 8. Não usar emojis como ícones funcionais.
-
-9. Não usar ícones coloridos em menus comuns.
-
-10. Todo botão somente com ícone deverá possuir tooltip.
-
+9. Não misturar famílias sem decisão arquitetural.
+10. Todo botão somente com ícone deverá possuir nome acessível e tooltip quando necessário.
 11. Ações destrutivas usarão ícone e texto quando houver espaço.
-
 12. Ícones decorativos deverão ser ocultados de leitores de acessibilidade.
-
----
-
 # 24. Tamanhos de ícone
 
 | Token | Tamanho | Uso |
@@ -853,26 +840,19 @@ variante
 
 ---
 
-# 26. Crédito do Icons8
+# 26. Licença da iconografia
 
-Caso a licença gratuita seja utilizada, a aplicação deverá possuir crédito ao Icons8 na página:
+Lucide é a fonte oficial de ícones do frontend.
 
-```text
-Ajuda → Sobre o OrganizeG3
-```
+A licença aplicável deverá permanecer registrada junto às dependências e à documentação do projeto.
 
-Exemplo de texto:
+Não copiar ícones de bibliotecas externas para `theme_design` sem necessidade.
 
-```text
-Ícones de interface fornecidos por Icons8.
-```
+Quando um ícone específico não existir na biblioteca oficial:
 
-A licença comercial adquirida deverá ser arquivada na documentação administrativa do projeto.
-
-Não incluir arquivos baixados sem registro da origem e da licença aplicável.
-
----
-
+1. procurar equivalente semântico;
+2. avaliar composição com ícones existentes;
+3. somente então adicionar ativo SVG próprio ou biblioteca complementar mediante decisão documentada.
 # 27. Mapa funcional inicial de ícones
 
 | Ação ou módulo | Nome de busca recomendado |
@@ -3004,34 +2984,36 @@ Não reduzir fontes para fazer o conteúdo caber.
 
 ---
 
-# 99. PWA futura
+# 99. Responsividade oficial — React/PWA
+
+A responsividade é obrigatória desde a primeira implementação, não uma etapa futura.
 
 Breakpoints:
 
 ```text
 sm: 640 px
-
 md: 768 px
-
 lg: 1024 px
-
 xl: 1280 px
-
 2xl: 1536 px
 ```
 
-No mobile:
+Regras:
 
-- sidebar vira drawer;
-- tabelas podem virar listas ou cards controlados;
-- ações primárias permanecem visíveis;
-- toque mínimo de 40 px;
-- dialogs grandes viram tela cheia;
-- filtros viram painel;
-- navegação inferior poderá ser avaliada.
+- desktop, notebook, tablet e celular usam a mesma base React;
+- sidebar pode virar drawer;
+- tabelas podem ocultar colunas secundárias ou virar listas/cards controlados;
+- ações primárias permanecem acessíveis;
+- toque mínimo deve respeitar ergonomia móvel;
+- dialogs grandes podem virar tela cheia ou página dedicada;
+- filtros podem virar painel;
+- navegação inferior poderá ser utilizada quando fizer sentido no mobile;
+- nenhuma tela pode depender de largura fixa absoluta para funcionar;
+- conteúdo não pode se sobrepor;
+- texto não deve ser reduzido artificialmente para fazer o layout caber;
+- a estratégia de cada tabela deve declarar colunas essenciais, opcionais e comportamento por breakpoint.
 
----
-
+TanStack Table será a base oficial para tabelas de dados. Virtualização será adicionada quando volume real justificar.
 # 100. Padrões de página
 
 ## ListPage
@@ -3939,10 +3921,22 @@ Uma coleção de telas independentes
 # 128. Próximo passo
 
 ```text
-Criar a Galeria Visual Executável em PySide6
+Implementar a Galeria Visual Executável dentro do frontend React.
 
-Arquivo sugerido:
-src/organizeg3/devtools/design_gallery.py
+Caminho sugerido:
+apps/web/src/app/devtools/design-gallery/
 ```
 
 A galeria será a prova visual da especificação e deverá ser aprovada antes da aplicação em todas as páginas.
+
+Ela deverá permitir validar pelo menos:
+
+- tema claro e escuro;
+- desktop, tablet e mobile;
+- componentes compartilhados;
+- tabelas responsivas;
+- estados de carregamento, vazio e erro;
+- iconografia Lucide;
+- foco e navegação por teclado;
+- touch targets;
+- densidade.

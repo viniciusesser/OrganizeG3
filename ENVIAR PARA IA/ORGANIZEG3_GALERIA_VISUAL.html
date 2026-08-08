@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OrganizeG3 — Galeria Visual</title>
+<title>OrganizeG3 — Galeria Visual React/PWA</title>
 <style>
 :root {
   --font: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
@@ -152,6 +152,20 @@ html[data-theme="dark"] .alert.info { background:#122E3C; color:#77C9ED; border-
   .grid { grid-template-columns:repeat(2,1fr); }
   .field-grid { grid-template-columns:1fr 1fr; }
 }
+@media (max-width: 767px) {
+  .app { display:block; }
+  .sidebar { display:none; }
+  .topbar { padding:0 14px; gap:10px; }
+  .search { width:100%; min-width:0; }
+  .top-actions .btn.secondary { display:none; }
+  .content { padding:16px 14px 28px; }
+  .page-head { align-items:stretch; flex-direction:column; }
+  .actions { width:100%; }
+  .actions .btn { flex:1; justify-content:center; }
+  .grid { grid-template-columns:1fr; }
+  .field-grid { grid-template-columns:1fr; }
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
 </style>
 </head>
 <body>
@@ -182,7 +196,7 @@ html[data-theme="dark"] .alert.info { background:#122E3C; color:#77C9ED; border-
         <div>
           <div class="breadcrumb">Design System / Galeria visual</div>
           <h1>Industrial Clarity</h1>
-          <div class="desc">Exemplo funcional dos tokens e componentes oficiais do OrganizeG3.</div>
+          <div class="desc">Referência visual dos tokens e componentes do frontend unificado React/PWA.</div>
         </div>
         <div class="actions">
           <button class="btn secondary">Exportar</button>
@@ -300,5 +314,9 @@ button.addEventListener("click", () => {
   button.textContent = dark ? "Modo escuro" : "Modo claro";
 });
 </script>
+<div style="display:none" aria-hidden="true">
+Referência normativa: ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md.
+A implementação oficial deve existir em apps/web e consumir theme_design.
+</div>
 </body>
 </html>

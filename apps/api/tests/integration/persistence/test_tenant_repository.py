@@ -1,26 +1,30 @@
-"""Integration tests for the SQLAlchemy tenant repository."""
-
-from __future__ import annotations
+"""Integration tests for tenant persistence queries."""
 
 import uuid
 
+import pytest
 from sqlalchemy.orm import Session
 
 from organizeg3_api.infrastructure.persistence.models.tenant import (
-    TenantModel,
+    TenantRecordModel,
 )
 from organizeg3_api.infrastructure.persistence.repositories.tenant_repository import (
     SQLAlchemyTenantRepository,
 )
 
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.database,
+]
 
-def test_reports_active_tenant(
+
+def test_finds_active_tenant(
     session: Session,
 ) -> None:
     tenant_id = uuid.uuid4()
 
     session.add(
-        TenantModel(
+        TenantRecordModel(
             id=tenant_id,
             name="Empresa Ativa",
             status="ACTIVE",
@@ -34,32 +38,20 @@ def test_reports_active_tenant(
         session
     )
 
-    assert repository.is_active(
+    assert repository.exists_active(
         tenant_id
     )
 
 
-def test_rejects_missing_tenant(
-    session: Session,
-) -> None:
-    repository = SQLAlchemyTenantRepository(
-        session
-    )
-
-    assert not repository.is_active(
-        uuid.uuid4()
-    )
-
-
-def test_rejects_disabled_tenant(
+def test_rejects_inactive_flag(
     session: Session,
 ) -> None:
     tenant_id = uuid.uuid4()
 
     session.add(
-        TenantModel(
+        TenantRecordModel(
             id=tenant_id,
-            name="Empresa Desativada",
+            name="Empresa Inativa",
             status="ACTIVE",
             is_active=False,
         )
@@ -71,7 +63,7 @@ def test_rejects_disabled_tenant(
         session
     )
 
-    assert not repository.is_active(
+    assert not repository.exists_active(
         tenant_id
     )
 
@@ -82,7 +74,7 @@ def test_rejects_non_active_status(
     tenant_id = uuid.uuid4()
 
     session.add(
-        TenantModel(
+        TenantRecordModel(
             id=tenant_id,
             name="Empresa Suspensa",
             status="SUSPENDED",
@@ -96,6 +88,18 @@ def test_rejects_non_active_status(
         session
     )
 
-    assert not repository.is_active(
+    assert not repository.exists_active(
         tenant_id
+    )
+
+
+def test_rejects_unknown_tenant(
+    session: Session,
+) -> None:
+    repository = SQLAlchemyTenantRepository(
+        session
+    )
+
+    assert not repository.exists_active(
+        uuid.uuid4()
     )

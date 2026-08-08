@@ -16,7 +16,7 @@
 
 | Documento              | AI\_DEVELOPMENT\_GUIDE.md         |
 
-| Status                 | Obrigatório                     |
+| Status                 | Obrigatório — revisado para frontend React/PWA |
 
 | Prioridade             | Máxima                          |
 
@@ -39,6 +39,9 @@
 
 
 Este documento estabelece as regras obrigatórias para desenvolvimento assistido por Inteligência Artificial no OrganizeG3.
+
+A partir de 2026-08-08, `ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md` é obrigatório para qualquer trabalho de UI/UX e prevalece sobre referências antigas a PySide6/Qt Widgets como interface principal.
+
 
 
 
@@ -208,6 +211,10 @@ O domínio não pode importar:
 
 \* PySide6;
 
+\* React;
+
+\* TypeScript;
+
 \* bibliotecas visuais;
 
 \* implementações de banco;
@@ -278,19 +285,49 @@ A infraestrutura depende dos contratos internos. O domínio nunca depende dela.
 
 \## 3.4 Presentation
 
+A Presentation oficial é o frontend unificado React/PWA e a API HTTP.
 
+```text
+React 19 + TypeScript
+    ↓ HTTPS
+FastAPI
+    ↓
+Application Layer
+```
 
-Desktop, PWA e API são interfaces.
+Desktop, notebook, tablet e celular utilizam a mesma aplicação React responsiva.
 
+A Presentation não pode conter regras de negócio e não pode acessar SQLAlchemy, repositórios internos ou banco diretamente.
 
+Regras obrigatórias para frontend:
 
-Eles não podem conter regras de negócio.
+\* utilizar `theme_design` como autoridade visual;
 
+\* não utilizar valores visuais hardcoded em páginas ou componentes de feature;
 
+\* utilizar componentes compartilhados antes de criar variações locais;
 
-\---
+\* tabelas devem possuir comportamento responsivo explícito;
 
+\* layouts não podem depender de largura fixa para funcionar;
 
+\* ícones devem ser SVG vetoriais da biblioteca oficial;
+
+\* estado de servidor deve ser tratado pelo mecanismo oficial de server state;
+
+\* estado local de interface não deve duplicar dados de servidor;
+
+\* autenticação, autorização e Tenant devem ser validados pelo backend;
+
+\* nenhuma ação crítica pode existir somente no frontend.
+
+PySide6/Qt Widgets deixa de ser a tecnologia da interface principal. Código PySide6 legado, quando ainda existir, é tratado apenas como legado de transição e não deve receber novas funcionalidades visuais sem decisão explícita.
+
+A decisão arquitetural está formalizada em:
+
+```text
+ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md
+```
 
 \# 4. Regras de domínio
 

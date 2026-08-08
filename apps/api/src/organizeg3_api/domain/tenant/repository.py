@@ -1,16 +1,17 @@
-"""Repository contract for tenant availability queries."""
+"""Repository contract for tenant access validation."""
 
 from __future__ import annotations
 
-from typing import Protocol
+from abc import ABC, abstractmethod
 import uuid
 
 
-class ITenantRepository(Protocol):
+class ITenantRepository(ABC):
     """Expose tenant queries required by the application layer."""
 
-    def is_active(
+    @abstractmethod
+    def exists_active(
         self,
         tenant_id: uuid.UUID,
     ) -> bool:
-        """Return whether the tenant exists and can use the platform."""
+        """Return whether the tenant exists and can access the platform."""

@@ -1,4 +1,4 @@
-"""Synchronous SQLAlchemy tenant repository."""
+"""SQLAlchemy implementation of the tenant repository."""
 
 from __future__ import annotations
 
@@ -8,11 +8,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from organizeg3_api.domain.tenant.repository import ITenantRepository
-from organizeg3_api.infrastructure.persistence.models.tenant import TenantModel
+from organizeg3_api.infrastructure.persistence.models.tenant import (
+    TenantRecordModel,
+)
 
 
-class SQLAlchemyTenantRepository(ITenantRepository):
-    """Query tenant availability using the platform database."""
+class SQLAlchemyTenantRepository(
+    ITenantRepository
+):
+    """Read tenant availability from the relational database."""
 
     def __init__(
         self,
@@ -20,23 +24,25 @@ class SQLAlchemyTenantRepository(ITenantRepository):
     ) -> None:
         self._session = session
 
-    def is_active(
+    def exists_active(
         self,
         tenant_id: uuid.UUID,
     ) -> bool:
-        """Return whether the tenant exists and is fully active."""
+        """Return whether the tenant exists and is operational."""
 
         statement = (
-            select(TenantModel.id)
+            select(TenantRecordModel.id)
             .where(
-                TenantModel.id == tenant_id,
-                TenantModel.is_active.is_(True),
-                TenantModel.status == "ACTIVE",
+                TenantRecordModel.id == tenant_id,
+                TenantRecordModel.is_active.is_(True),
+                TenantRecordModel.status == "ACTIVE",
             )
             .limit(1)
         )
 
         return (
-            self._session.execute(statement).scalar_one_or_none()
+            self._session.execute(
+                statement
+            ).scalar_one_or_none()
             is not None
         )

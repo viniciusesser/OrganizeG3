@@ -21,11 +21,8 @@ if str(API_SOURCE) not in sys.path:
 
 from organizeg3_api.config import get_settings  # noqa: E402
 from organizeg3_api.infrastructure.database.base import Base  # noqa: E402
-from organizeg3_api.infrastructure.persistence.models.customer import (  # noqa: E402,F401
-    CustomerModel,
-)
-from organizeg3_api.infrastructure.persistence.models.tenant import (  # noqa: E402,F401
-    TenantModel,
+from organizeg3_api.infrastructure.persistence import (  # noqa: E402,F401
+    models as persistence_models,
 )
 
 config = context.config
@@ -40,7 +37,7 @@ def include_object(
     object_: object,
     name: str | None,
     type_: str,
-    reflected: bool,
+    reflected: bool,  # noqa: FBT001
     compare_to: object | None,
 ) -> bool:
     """Protect legacy tables and columns that are not mapped yet."""
@@ -146,10 +143,8 @@ def run_migrations_online() -> None:
         {},
     )
 
-    configuration["sqlalchemy.url"] = (
-        normalize_database_url(
-            get_settings().require_database_url()
-        )
+    configuration["sqlalchemy.url"] = normalize_database_url(
+        get_settings().require_database_url()
     )
 
     connectable = engine_from_config(

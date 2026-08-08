@@ -21,6 +21,11 @@ tenant_id_context: ContextVar[str | None] = ContextVar(
     default=None,
 )
 
+branch_id_context: ContextVar[str | None] = ContextVar(
+    "branch_id",
+    default=None,
+)
+
 user_id_context: ContextVar[str | None] = ContextVar(
     "user_id",
     default=None,
@@ -43,6 +48,7 @@ def add_request_context(
 
     correlation_id = correlation_id_context.get()
     tenant_id = tenant_id_context.get()
+    branch_id = branch_id_context.get()
     user_id = user_id_context.get()
     device_id = device_id_context.get()
 
@@ -51,6 +57,9 @@ def add_request_context(
 
     if tenant_id is not None:
         event_dict["tenant_id"] = tenant_id
+
+    if branch_id is not None:
+        event_dict["branch_id"] = branch_id
 
     if user_id is not None:
         event_dict["user_id"] = user_id
@@ -146,32 +155,51 @@ def configure_logging(settings: Settings) -> None:
     )
 
 
-def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
+def get_logger(
+    name: str | None = None,
+) -> structlog.stdlib.BoundLogger:
     """Return a structured logger."""
 
-    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))
+    return cast(
+        structlog.stdlib.BoundLogger,
+        structlog.get_logger(name),
+    )
 
 
 def set_request_context(
     *,
     correlation_id: str | None = None,
     tenant_id: str | None = None,
+    branch_id: str | None = None,
     user_id: str | None = None,
     device_id: str | None = None,
 ) -> None:
     """Set contextual identifiers for the current request."""
 
     if correlation_id is not None:
-        correlation_id_context.set(correlation_id)
+        correlation_id_context.set(
+            correlation_id
+        )
 
     if tenant_id is not None:
-        tenant_id_context.set(tenant_id)
+        tenant_id_context.set(
+            tenant_id
+        )
+
+    if branch_id is not None:
+        branch_id_context.set(
+            branch_id
+        )
 
     if user_id is not None:
-        user_id_context.set(user_id)
+        user_id_context.set(
+            user_id
+        )
 
     if device_id is not None:
-        device_id_context.set(device_id)
+        device_id_context.set(
+            device_id
+        )
 
 
 def clear_request_context() -> None:
@@ -179,6 +207,7 @@ def clear_request_context() -> None:
 
     correlation_id_context.set(None)
     tenant_id_context.set(None)
+    branch_id_context.set(None)
     user_id_context.set(None)
     device_id_context.set(None)
 

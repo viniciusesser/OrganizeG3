@@ -1,19 +1,33 @@
 """HTTP tests for customer identity validation."""
 
+from __future__ import annotations
+
 import uuid
 
 from fastapi.testclient import TestClient
 import pytest
+from tests.helpers.authentication import (
+    authentication_headers,
+)
 
 pytestmark = pytest.mark.api
+
+
+@pytest.fixture(autouse=True)
+def authorize_customer_requests(
+    authenticated_customer_client: TestClient,
+) -> None:
+    """Authorize customer requests for this test module."""
 
 
 def tenant_headers(
     tenant_id: uuid.UUID,
 ) -> dict[str, str]:
-    return {
-        "X-Tenant-ID": str(tenant_id),
-    }
+    """Build authenticated tenant headers."""
+
+    return authentication_headers(
+        tenant_id
+    )
 
 
 def test_create_normalizes_identity_and_contact_data(
@@ -22,7 +36,9 @@ def test_create_normalizes_identity_and_contact_data(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Cliente Normalizado",
             "customer_type": "INDIVIDUAL",
@@ -40,10 +56,12 @@ def test_create_normalizes_identity_and_contact_data(
         body["document_number"]
         == "52998224725"
     )
+
     assert (
         body["email"]
         == "cliente@example.com"
     )
+
     assert (
         body["phone"]
         == "18999990000"
@@ -75,7 +93,9 @@ def test_create_rejects_invalid_identity_data(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Cliente Inválido",
             field: value,
@@ -83,6 +103,7 @@ def test_create_rejects_invalid_identity_data(
     )
 
     assert response.status_code == 422
+
     assert (
         response.json()["error"]["code"]
         == "request.validation_error"
@@ -95,7 +116,9 @@ def test_create_rejects_document_incompatible_with_customer_type(
 ) -> None:
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Empresa Inválida",
             "customer_type": "CORPORATE",
@@ -117,7 +140,9 @@ def test_rejects_duplicate_document_in_same_tenant(
 
     first_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json=payload,
     )
 
@@ -125,7 +150,9 @@ def test_rejects_duplicate_document_in_same_tenant(
 
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Segundo Cliente",
             "document_number": "52998224725",
@@ -133,10 +160,12 @@ def test_rejects_duplicate_document_in_same_tenant(
     )
 
     assert response.status_code == 409
+
     assert (
         response.json()["error"]["code"]
         == "customer.duplicate"
     )
+
     assert (
         response.json()["error"]["details"]
         == {
@@ -151,7 +180,9 @@ def test_rejects_duplicate_email_case_insensitively(
 ) -> None:
     first_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Primeiro Cliente",
             "email": "cliente@example.com",
@@ -162,7 +193,9 @@ def test_rejects_duplicate_email_case_insensitively(
 
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Segundo Cliente",
             "email": "CLIENTE@EXAMPLE.COM",
@@ -170,6 +203,7 @@ def test_rejects_duplicate_email_case_insensitively(
     )
 
     assert response.status_code == 409
+
     assert (
         response.json()["error"]["details"]
         == {
@@ -191,7 +225,9 @@ def test_allows_same_identity_data_in_other_tenant(
 
     first_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json=payload,
     )
 
@@ -214,7 +250,9 @@ def test_update_rejects_identity_used_by_another_customer(
 ) -> None:
     first_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Primeiro",
             "email": "primeiro@example.com",
@@ -226,7 +264,9 @@ def test_update_rejects_identity_used_by_another_customer(
 
     second_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Segundo",
             "email": "segundo@example.com",
@@ -238,7 +278,9 @@ def test_update_rejects_identity_used_by_another_customer(
 
     response = client.patch(
         f"/api/v1/customers/{second['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": second["row_version"],
             "email": first["email"],
@@ -246,6 +288,7 @@ def test_update_rejects_identity_used_by_another_customer(
     )
 
     assert response.status_code == 409
+
     assert (
         response.json()["error"]["details"]
         == {
@@ -260,7 +303,9 @@ def test_update_keeps_own_identity_data(
 ) -> None:
     create_response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "name": "Cliente",
             "document_number": "52998224725",
@@ -273,7 +318,9 @@ def test_update_keeps_own_identity_data(
 
     response = client.patch(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
             "name": "Cliente Atualizado",
@@ -281,6 +328,7 @@ def test_update_keeps_own_identity_data(
     )
 
     assert response.status_code == 200
+
     assert (
         response.json()["name"]
         == "Cliente Atualizado"

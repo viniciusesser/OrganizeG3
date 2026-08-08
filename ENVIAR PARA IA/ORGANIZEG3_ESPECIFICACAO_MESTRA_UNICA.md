@@ -7,8 +7,8 @@
 | Propriedade | Valor |
 |---|---|
 | Documento | ORGANIZEG3_ESPECIFICACAO_MESTRA_UNICA.md |
-| Versão | 1.0.0-consolidada |
-| Gerado em | 2026-08-05T13:09:56.256216+00:00 |
+| Versão | 1.1.0-consolidada |
+| Revisado em | 2026-08-08 |
 | Status | Referência de trabalho consolidada |
 | Idioma | Português |
 | Código | Inglês conforme convenções oficiais |
@@ -49,6 +49,21 @@ Código existente
 ```
 
 O adendo do Design System v2.3 prevalece sobre referências visuais anteriores quando tratar explicitamente do mesmo assunto.
+
+## Decisão arquitetural de frontend — 2026-08-08
+
+`ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md` passa a prevalecer sobre toda referência anterior que determine:
+
+- PySide6/Qt Widgets como interface principal;
+- Desktop e PWA como clientes visuais separados;
+- PWA como etapa futura;
+- `pytest-qt` como ferramenta principal de testes de interface;
+- PyInstaller/Inno Setup como empacotamento da interface principal.
+
+A interface oficial é uma única aplicação React + TypeScript + Vite + PWA, responsiva para desktop, notebook, tablet e celular.
+
+Python permanece no backend, Application Layer, Domain, persistência, workers, integrações e automações.
+
 
 ---
 
@@ -46761,6 +46776,8 @@ O Domínio não conhece:
 - PostgreSQL
 - SQLite
 - FastAPI
+- React
+- TypeScript
 - PySide6
 - Qt
 - Supabase
@@ -94279,7 +94296,7 @@ UI → SQLAlchemy
 UI → Banco
 Route → regra de negócio
 Repository → decisão de negócio
-Domain → PySide6/FastAPI/SQLAlchemy/Supabase
+Domain → React/FastAPI/SQLAlchemy/Supabase
 ```
 
 Toda alteração de estado deverá ocorrer por Command ou caso de uso da Application Layer.
@@ -94350,20 +94367,28 @@ Não adicionar campos indiscriminadamente. Confirmar a classe da entidade: mutá
 - Notificações são consequência, não regra principal.
 - Publicação deve ocorrer após commit ou via outbox transacional.
 
-## 8. Interface PySide6
+## 8. Interface React/PWA
 
-- Não colocar regra de negócio em widgets.
-- Não bloquear a thread principal.
-- Utilizar workers para operações extensas.
+- Não colocar regra de negócio em componentes React.
+- Não acessar SQLAlchemy, repositórios ou banco diretamente pela interface.
+- Utilizar TanStack Query para estado de servidor.
+- Utilizar Zustand apenas para estado local de interface.
+- Utilizar Zod nas validações de fronteira do frontend quando aplicável.
+- Utilizar TanStack Table como base de tabelas de dados.
+- Toda tabela deve possuir estratégia responsiva explícita.
+- Desktop, notebook, tablet e celular utilizam a mesma base React.
 - Não utilizar emoji na UI.
-- Utilizar `IconManager` real quando estiver trabalhando no legado correspondente.
-- Botão somente com ícone exige tooltip.
-- Ações principais usam ícone e texto.
+- Utilizar Lucide React como biblioteca oficial de ícones.
+- Botão somente com ícone exige nome acessível e tooltip quando necessário.
+- Ações principais usam ícone e texto quando houver espaço.
 - Não usar drag and drop como única interação.
-- Não usar cores hardcoded, salvo exceções oficiais explicitadas no adendo.
-- Utilizar `ThemeManager`/`theme_design` oficial.
+- Não usar cores, tamanhos, espaçamentos, bordas, sombras ou breakpoints hardcoded em páginas.
+- Utilizar exclusivamente `theme_design` e componentes compartilhados.
 - Preservar contraste dos inputs.
-- Cards simultâneos não podem se sobrepor.
+- Conteúdo e cards simultâneos não podem se sobrepor.
+- Layouts não podem depender de largura fixa absoluta para funcionar.
+- A PWA é a distribuição oficial inicial também no desktop.
+- Tauri somente poderá ser introduzido por ADR futuro e não poderá criar uma segunda UI.
 
 ## 9. Segurança
 

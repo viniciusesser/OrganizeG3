@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Annotated
-import uuid
 
 from fastapi import (
     APIRouter,
@@ -31,9 +30,20 @@ from organizeg3_api.application.customer.use_cases import (
 from organizeg3_api.domain.customer.entity import (
     CustomerType,
 )
+from organizeg3_api.domain.identity.authentication import (
+    AuthenticatedContext,
+)
+from organizeg3_api.domain.identity.permissions import (
+    CustomerPermissions,
+)
+from organizeg3_api.infrastructure.http.audit_context import (
+    get_audit_context,
+)
+from organizeg3_api.infrastructure.http.authentication import (
+    require_permission,
+)
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
-    get_tenant_id,
 )
 from organizeg3_api.infrastructure.persistence.repositories.customer_repository import (
     SQLAlchemyCustomerRepository,
@@ -42,6 +52,9 @@ from organizeg3_api.infrastructure.persistence.repositories.customer_repository 
 router = APIRouter(
     prefix="/customers",
     tags=["Customers"],
+    dependencies=[
+        Depends(get_audit_context),
+    ],
 )
 
 CustomerId = Annotated[
@@ -49,6 +62,51 @@ CustomerId = Annotated[
     Path(
         ge=1,
         description="Identificador interno do cliente",
+    ),
+]
+
+ReadCustomerContext = Annotated[
+    AuthenticatedContext,
+    Depends(
+        require_permission(
+            CustomerPermissions.READ
+        )
+    ),
+]
+
+CreateCustomerContext = Annotated[
+    AuthenticatedContext,
+    Depends(
+        require_permission(
+            CustomerPermissions.CREATE
+        )
+    ),
+]
+
+UpdateCustomerContext = Annotated[
+    AuthenticatedContext,
+    Depends(
+        require_permission(
+            CustomerPermissions.UPDATE
+        )
+    ),
+]
+
+ArchiveCustomerContext = Annotated[
+    AuthenticatedContext,
+    Depends(
+        require_permission(
+            CustomerPermissions.ARCHIVE
+        )
+    ),
+]
+
+ReactivateCustomerContext = Annotated[
+    AuthenticatedContext,
+    Depends(
+        require_permission(
+            CustomerPermissions.REACTIVATE
+        )
     ),
 ]
 
@@ -61,16 +119,13 @@ CustomerId = Annotated[
 )
 def create_customer(
     payload: CustomerCreate,
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: CreateCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
     ],
 ) -> CustomerResponse:
-    """Create a customer in the current tenant."""
+    """Create a customer in the authenticated tenant."""
 
     repository = SQLAlchemyCustomerRepository(
         session
@@ -79,7 +134,7 @@ def create_customer(
     customer = CreateCustomerUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         payload,
     )
 
@@ -95,10 +150,7 @@ def create_customer(
     summary="List and search customers",
 )
 def list_customers(
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: ReadCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -135,7 +187,7 @@ def list_customers(
         Query(ge=0),
     ] = 0,
 ) -> list[CustomerResponse]:
-    """List customers from the current tenant."""
+    """List customers from the authenticated tenant."""
 
     repository = SQLAlchemyCustomerRepository(
         session
@@ -144,7 +196,7 @@ def list_customers(
     customers = ListCustomersUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         include_inactive=include_inactive,
         search=search,
         customer_type=customer_type,
@@ -153,7 +205,9 @@ def list_customers(
     )
 
     return [
-        CustomerResponse.model_validate(customer)
+        CustomerResponse.model_validate(
+            customer
+        )
         for customer in customers
     ]
 
@@ -166,10 +220,7 @@ def list_customers(
 )
 def get_customer(
     customer_id: CustomerId,
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: ReadCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -184,7 +235,7 @@ def get_customer(
     customer = GetCustomerUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         customer_id,
     )
 
@@ -202,10 +253,7 @@ def get_customer(
 def update_customer(
     customer_id: CustomerId,
     payload: CustomerUpdate,
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: UpdateCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -220,7 +268,7 @@ def update_customer(
     customer = UpdateCustomerUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         customer_id,
         payload,
     )
@@ -239,10 +287,7 @@ def update_customer(
 def archive_customer(
     customer_id: CustomerId,
     payload: CustomerVersionCommand,
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: ArchiveCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -257,7 +302,7 @@ def archive_customer(
     customer = ArchiveCustomerUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         customer_id,
         payload.row_version,
     )
@@ -276,10 +321,7 @@ def archive_customer(
 def reactivate_customer(
     customer_id: CustomerId,
     payload: CustomerVersionCommand,
-    tenant_id: Annotated[
-        uuid.UUID,
-        Depends(get_tenant_id),
-    ],
+    context: ReactivateCustomerContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -294,7 +336,7 @@ def reactivate_customer(
     customer = ReactivateCustomerUseCase(
         repository
     ).execute(
-        tenant_id,
+        context.tenant_id,
         customer_id,
         payload.row_version,
     )

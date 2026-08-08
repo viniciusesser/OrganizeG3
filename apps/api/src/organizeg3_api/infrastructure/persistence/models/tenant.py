@@ -1,20 +1,44 @@
-"""SQLAlchemy ORM mapping for the tenant registry."""
+"""SQLAlchemy ORM mapping for the platform tenant table."""
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 import uuid
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Uuid, func, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    Uuid,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
-from organizeg3_api.infrastructure.database.base import Base, utc_now
+from organizeg3_api.infrastructure.database.base import Base
 
 
-class TenantModel(Base):
-    """Represent one company registered in the OrganizeG3 platform."""
+class TenantRecordModel(Base):
+    """Map an organization registered in the OrganizeG3 platform."""
 
     __tablename__ = "tenants"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "legacy_config_id",
+            name="uq_tenants_legacy_config_id",
+        ),
+        UniqueConstraint(
+            "document_number",
+            name="uq_tenants_document_number",
+        ),
+        Index(
+            "ix_tenants_is_active",
+            "is_active",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True),
@@ -25,7 +49,6 @@ class TenantModel(Base):
     legacy_config_id: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
-        unique=True,
     )
 
     name: Mapped[str] = mapped_column(
@@ -41,7 +64,6 @@ class TenantModel(Base):
     document_number: Mapped[str | None] = mapped_column(
         String(14),
         nullable=True,
-        unique=True,
     )
 
     email: Mapped[str | None] = mapped_column(
@@ -66,20 +88,19 @@ class TenantModel(Base):
         nullable=False,
         default=True,
         server_default=text("true"),
-        index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=utc_now,
-        server_default=func.now(),
+        default=lambda: datetime.now(UTC),
+        server_default=text("CURRENT_TIMESTAMP"),
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        default=utc_now,
-        onupdate=utc_now,
-        server_default=func.now(),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        server_default=text("CURRENT_TIMESTAMP"),
     )

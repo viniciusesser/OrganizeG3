@@ -1,19 +1,33 @@
 """HTTP tests for customer update and lifecycle."""
 
+from __future__ import annotations
+
 import uuid
 
 from fastapi.testclient import TestClient
 import pytest
+from tests.helpers.authentication import (
+    authentication_headers,
+)
 
 pytestmark = pytest.mark.api
+
+
+@pytest.fixture(autouse=True)
+def authorize_customer_requests(
+    authenticated_customer_client: TestClient,
+) -> None:
+    """Authorize customer requests for this test module."""
 
 
 def tenant_headers(
     tenant_id: uuid.UUID,
 ) -> dict[str, str]:
-    return {
-        "X-Tenant-ID": str(tenant_id),
-    }
+    """Build authenticated tenant headers."""
+
+    return authentication_headers(
+        tenant_id
+    )
 
 
 def create_customer(
@@ -31,7 +45,9 @@ def create_customer(
 
     response = client.post(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json=payload,
     )
 
@@ -53,7 +69,9 @@ def test_updates_customer_and_version(
 
     response = client.patch(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
             "name": "Cliente Atualizado",
@@ -81,7 +99,9 @@ def test_rejects_stale_update(
 
     first_update = client.patch(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
             "name": "Primeira alteração",
@@ -92,7 +112,9 @@ def test_rejects_stale_update(
 
     stale_update = client.patch(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
             "name": "Alteração antiga",
@@ -100,6 +122,7 @@ def test_rejects_stale_update(
     )
 
     assert stale_update.status_code == 409
+
     assert (
         stale_update.json()["error"]["code"]
         == "concurrency.conflict"
@@ -145,7 +168,9 @@ def test_archives_and_hides_customer(
             f"/api/v1/customers/"
             f"{created['id']}/archive"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
         },
@@ -160,14 +185,18 @@ def test_archives_and_hides_customer(
 
     get_response = client.get(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
     )
 
     assert get_response.status_code == 404
 
     list_response = client.get(
         "/api/v1/customers",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         params={
             "include_inactive": True,
         },
@@ -192,11 +221,15 @@ def test_reactivates_archived_customer(
             f"/api/v1/customers/"
             f"{created['id']}/archive"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
         },
     )
+
+    assert archived_response.status_code == 200
 
     archived = archived_response.json()
 
@@ -205,7 +238,9 @@ def test_reactivates_archived_customer(
             f"/api/v1/customers/"
             f"{created['id']}/reactivate"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": archived["row_version"],
         },
@@ -220,7 +255,9 @@ def test_reactivates_archived_customer(
 
     get_response = client.get(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
     )
 
     assert get_response.status_code == 200
@@ -240,11 +277,15 @@ def test_rejects_archiving_twice(
             f"/api/v1/customers/"
             f"{created['id']}/archive"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
         },
     )
+
+    assert first_response.status_code == 200
 
     archived = first_response.json()
 
@@ -253,13 +294,16 @@ def test_rejects_archiving_twice(
             f"/api/v1/customers/"
             f"{created['id']}/archive"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": archived["row_version"],
         },
     )
 
     assert second_response.status_code == 409
+
     assert (
         second_response.json()["error"]["code"]
         == "workflow.invalid_transition"
@@ -280,13 +324,16 @@ def test_rejects_invalid_reactivation(
             f"/api/v1/customers/"
             f"{created['id']}/reactivate"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
         },
     )
 
     assert response.status_code == 409
+
     assert (
         response.json()["error"]["code"]
         == "workflow.invalid_transition"
@@ -307,17 +354,23 @@ def test_archived_customer_cannot_be_updated(
             f"/api/v1/customers/"
             f"{created['id']}/archive"
         ),
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": created["row_version"],
         },
     )
 
+    assert archived_response.status_code == 200
+
     archived = archived_response.json()
 
     response = client.patch(
         f"/api/v1/customers/{created['id']}",
-        headers=tenant_headers(tenant_id),
+        headers=tenant_headers(
+            tenant_id
+        ),
         json={
             "row_version": archived["row_version"],
             "name": "Não permitido",

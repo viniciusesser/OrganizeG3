@@ -1,5 +1,10 @@
 ﻿# Estrutura atual do projeto
 
+> Revisão arquitetural de UI/UX — 2026-08-08.
+>
+> A estrutura-alvo de apresentação foi consolidada em `apps/web`, com React + TypeScript + Vite + PWA para desktop, notebook, tablet e celular. `apps/desktop` e `apps/pwa` deixam de representar clientes oficiais separados. Código PySide6 legado, se ainda existir fisicamente no workspace durante a migração, deve ser tratado como legado temporário e removido apenas após não possuir consumidores.
+
+
 ```text
 PROGRAMA/
 ├── apps
@@ -50,13 +55,19 @@ PROGRAMA/
 │   │   │       └── main.py
 │   │   ├── tests
 │   │   └── pyproject.toml
-│   ├── desktop
-│   │   ├── src
-│   │   │   └── organizeg3_desktop
-│   │   │       └── __init__.py
-│   │   ├── tests
-│   │   └── pyproject.toml
-│   └── pwa
+│   └── web
+│       ├── src
+│       │   ├── app
+│       │   ├── components
+│       │   ├── features
+│       │   ├── layouts
+│       │   ├── lib
+│       │   └── theme_design
+│       ├── public
+│       ├── tests
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── vite.config.ts
 ├── database
 │   ├── functions
 │   ├── migrations
@@ -217,3 +228,39 @@ PROGRAMA/
 ├── README.md
 └── requirements.txt
 ```
+
+
+---
+
+## Decisão de frontend vigente
+
+```text
+apps/web
+    ↓ HTTPS
+apps/api
+    ↓
+Application Layer
+    ↓
+Domain
+    ↓
+Infrastructure
+```
+
+Referência normativa:
+
+```text
+ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md
+```
+
+Regras:
+
+- uma única base React para desktop e mobile;
+- responsividade adaptativa;
+- `theme_design` centralizado no frontend;
+- sem valores visuais hardcoded em páginas;
+- TanStack Table para tabelas de dados;
+- Lucide React para iconografia;
+- TanStack Query para estado de servidor;
+- Zustand apenas para estado local de interface;
+- PWA como forma inicial de instalação desktop;
+- Tauri apenas por ADR futuro se houver necessidade nativa real.

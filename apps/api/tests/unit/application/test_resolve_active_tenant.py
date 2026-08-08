@@ -1,7 +1,5 @@
 """Unit tests for active tenant resolution."""
 
-from __future__ import annotations
-
 import uuid
 
 import pytest
@@ -9,56 +7,94 @@ import pytest
 from organizeg3_api.application.tenant.resolve_active_tenant import (
     ResolveActiveTenant,
 )
-from organizeg3_api.core.exceptions import TenantUnavailableError
+from organizeg3_api.core.exceptions import (
+    PermissionDeniedError,
+)
+from organizeg3_api.domain.tenant.repository import (
+    ITenantRepository,
+)
+
+pytestmark = pytest.mark.unit
 
 
-class FakeTenantRepository:
-    """In-memory tenant availability repository."""
+class TenantRepositoryStub(
+    ITenantRepository
+):
+    """Configurable repository stub."""
 
     def __init__(
         self,
-        active_tenant_ids: set[uuid.UUID],
+        *,
+        active: bool,
     ) -> None:
-        self._active_tenant_ids = active_tenant_ids
+        self._active = active
+        self.received_tenant_id: uuid.UUID | None = None
 
-    def is_active(
+    def exists_active(
         self,
         tenant_id: uuid.UUID,
     ) -> bool:
-        return tenant_id in self._active_tenant_ids
+        self.received_tenant_id = tenant_id
+        return self._active
 
 
-def test_returns_active_tenant_id() -> None:
+def test_returns_active_tenant() -> None:
     tenant_id = uuid.uuid4()
 
-    resolver = ResolveActiveTenant(
-        FakeTenantRepository(
-            {
-                tenant_id,
-            }
-        )
+    repository = TenantRepositoryStub(
+        active=True
     )
 
-    assert resolver.execute(
+    service = ResolveActiveTenant(
+        repository
+    )
+
+    result = service.execute(
         tenant_id
-    ) == tenant_id
+    )
+
+    assert result == tenant_id
+    assert (
+        repository.received_tenant_id
+        == tenant_id
+    )
 
 
 def test_rejects_unavailable_tenant() -> None:
-    tenant_id = uuid.uuid4()
+    repository = TenantRepositoryStub(
+        active=False
+    )
 
-    resolver = ResolveActiveTenant(
-        FakeTenantRepository(set())
+    service = ResolveActiveTenant(
+        repository
     )
 
     with pytest.raises(
-        TenantUnavailableError
+        PermissionDeniedError
     ) as captured:
-        resolver.execute(
-            tenant_id
+        service.execute(
+            uuid.uuid4()
         )
 
     assert (
-        captured.value.error_code
-        == "tenant.unavailable"
+        captured.value.details["reason"]
+        == "tenant_unavailable"
     )
+
+
+def test_rejects_null_uuid() -> None:
+    repository = TenantRepositoryStub(
+        active=True
+    )
+
+    service = ResolveActiveTenant(
+        repository
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="UUID nulo",
+    ):
+        service.execute(
+            uuid.UUID(int=0)
+        )

@@ -7,15 +7,19 @@
 | Propriedade | Valor |
 |---|---|
 | Documento | `ORGANIZEG3_ORDEM_OFICIAL_DE_IMPLEMENTACAO.md` |
-| Versão | `1.0.0` |
-| Data | `2026-08-05` |
+| Versão | `1.1.0` |
+| Data | `2026-08-08` |
 | Status | Aprovado para orientar a implementação |
 | Público | Proprietário, desenvolvedores e agentes de IA |
-| Aplicação inicial | Desktop Windows offline-first |
-| Estratégia | Migração incremental, sem reescrita total |
+| Aplicação de interface | React/PWA responsivo para desktop e mobile |
+| Estratégia | Backend preservado; frontend unificado React/PWA por migração incremental |
 | Stack vinculada | `ORGANIZEG3_STACK_TECNOLOGICO_OFICIAL.md` |
 | Especificação vinculada | `ORGANIZEG3_ESPECIFICACAO_MESTRA_UNICA.md` |
 | Código legado | Preservado e migrado por fatias verticais |
+
+
+> Decisão vigente de UI/UX: `ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md`.
+> PySide6/Qt Widgets deixa de ser a interface principal. A UI oficial passa a ser React + TypeScript + Vite + PWA, compartilhada entre desktop e mobile.
 
 ---
 
@@ -88,7 +92,7 @@ ADR aprovado
 
 # 3. Diagnóstico do ponto de partida conhecido
 
-Os arquivos fornecidos indicam a existência de uma aplicação PySide6 com SQLAlchemy e SQLite já funcional.
+Os arquivos históricos indicam a existência de uma aplicação PySide6 com SQLAlchemy e SQLite. A partir de 2026-08-08, essa UI é legado de transição; novas interfaces serão implementadas no frontend React/PWA.
 
 Foram identificados, no snapshot analisado:
 
@@ -270,7 +274,7 @@ Backup e restauração continuam válidos
 | 06 | Core transversal | Settings, errors, logging, UoW e task runner |
 | 07 | Tenant, empresa e filial | Escopo organizacional consistente |
 | 08 | Identidade, permissões e auditoria | Segurança local preparada para nuvem |
-| 09 | App Shell e Design System | Navegação e componentes compartilhados |
+| 09 | Frontend Foundation, App Shell e Design System | React/PWA responsivo e componentes compartilhados |
 | 10 | Primeira fatia vertical — Clientes | Modelo de implementação validado |
 | 11 | Fornecedores e catálogo | Base de suprimentos |
 | 12 | CRM e Comercial | Leads, oportunidades e pedidos |
@@ -293,8 +297,8 @@ Backup e restauração continuam válidos
 | 29 | Sincronização offline-first | SQLite ↔ API ↔ PostgreSQL |
 | 30 | BI | Indicadores e dashboards |
 | 31 | Inteligência Artificial | Assistência controlada |
-| 32 | PWA | Segundo cliente oficial |
-| 33 | Empacotamento e release | Instalação e atualização confiáveis |
+| 32 | PWA, offline e dispositivos | Instalação, cache, IndexedDB e adaptações mobile |
+| 33 | Build e release | Build web/PWA e implantação confiável |
 | 34 | Hardening e produção | Segurança, performance e recuperação |
 
 ---
@@ -368,7 +372,7 @@ Conteúdo:
 
 ```text
 Python
-PySide6
+React + TypeScript
 SQLAlchemy
 Windows
 Caminho do banco
@@ -484,7 +488,7 @@ Localizar:
 
 ```text
 .spec
-PyInstaller
+Build Vite/PWA
 assets
 icons
 templates
@@ -1171,52 +1175,74 @@ senha não aparece no log
 
 ---
 
-# 15. FASE 09 — App Shell e Design System
+# 15. FASE 09 — Frontend Foundation, App Shell e Design System
 
 ## Objetivo
 
-Criar a fundação visual compartilhada sem reescrever todas as telas.
+Criar a fundação visual oficial em React antes da implementação das páginas funcionais.
 
 ## Ordem
 
 ```text
-ApplicationShell
-NavigationService
-PageRegistry
-DialogService
-NotificationPresenter
-ErrorPresenter
-ThemeManager adapter
-IconManager adapter
-BasePage
-BaseDialog
+apps/web
+TypeScript
+Vite
+React
+React Router
+TanStack Query
+Zustand
+Zod
+PWA Plugin / Workbox
+theme_design
+AppShell
+ResponsiveLayout
+Sidebar / Drawer
+TopBar
+RouteGuard
+PermissionGuard
+ErrorBoundary
+PageHeader
 FilterBar
 DataTable
+ResponsiveList
 StatusBadge
 EmptyState
 LoadingState
 ErrorState
 Pagination
+Dialog / Sheet
+Toast / NotificationPresenter
 ```
 
-## Legado
+## Regras
 
-As páginas existentes poderão ser registradas no novo `PageRegistry`.
-
-A refatoração visual pendente continuará arquivo por arquivo, conforme `ORDEM_REFATORACAO`.
+- desktop, notebook, tablet e celular usam a mesma base React;
+- nenhuma página acessa SQLAlchemy ou banco diretamente;
+- nenhuma regra de negócio reside em componentes;
+- todo valor visual vem de `theme_design`;
+- TanStack Table é a base de tabelas;
+- tabelas precisam declarar comportamento por breakpoint;
+- Lucide React é a iconografia oficial;
+- TanStack Query controla estado de servidor;
+- Zustand é reservado a estado local de interface;
+- nenhum componente de feature pode criar uma linguagem visual própria;
+- PySide6 legado não recebe novas telas, salvo correção necessária durante a transição.
 
 ## Critério de saída
 
+- build React abre sem erros;
+- PWA manifest válido;
 - tema claro e escuro;
-- navegação existente;
-- login;
-- dashboard legado;
-- uma página nova;
-- encerramento;
-- sem QSS duplicado nos componentes novos.
-
----
-
+- navegação responsiva;
+- login shell;
+- layout desktop;
+- layout tablet;
+- layout mobile;
+- pelo menos uma tabela responsiva;
+- estados vazio, loading e erro;
+- testes unitários de componentes;
+- teste E2E do shell;
+- zero valor visual hardcoded nas páginas de referência.
 # 16. FASE 10 — Primeira fatia vertical: Clientes
 
 ## Objetivo
@@ -1983,7 +2009,7 @@ staging
 
 Clientes deverá ser o primeiro módulo exposto.
 
-A API deverá executar os mesmos handlers utilizados pelo Desktop.
+A API deverá executar os mesmos handlers/casos de uso utilizados pelo frontend React/PWA.
 
 Não duplicar regra de negócio.
 
@@ -2114,15 +2140,17 @@ Não iniciar com ações automáticas.
 
 ---
 
-# 39. FASE 32 — PWA
+# 39. FASE 32 — PWA, offline e adaptações de dispositivo
+
+A PWA já é o cliente oficial desde a fundação do frontend. Esta fase não cria um segundo cliente; ela endurece capacidades de instalação e operação em dispositivos.
 
 ## Pré-condições
 
 ```text
+Frontend React estável
 API estável
 OpenAPI versionado
 autenticação
-sincronização
 Design Tokens
 permissões
 observabilidade
@@ -2131,63 +2159,68 @@ observabilidade
 ## Ordem
 
 ```text
-Vite
-React
-TypeScript
-Design Tokens
-Auth
-API Client
-Customers
-Projects
-Agenda
-Field Operations
-IndexedDB
-Offline Queue
 PWA Manifest
 Service Worker
+cache do app shell
 Installability
+IndexedDB adapter
+offline read quando aplicável
+offline queue somente para fluxos aprovados
+idempotência
+reconciliação
+push notifications
+adaptações touch
+safe areas
+testes em tablet e celular
 ```
 
----
+## Regra
 
-# 40. FASE 33 — Empacotamento e release
+Não duplicar páginas ou regras para criar uma versão mobile. A adaptação ocorre por layout e componentes responsivos na mesma base React.
+# 40. FASE 33 — Build, distribuição e release
 
 ## Ordem
 
 ```text
-PyInstaller spec
-build onedir
-asset validation
-migration packaging
-startup smoke test
-Inno Setup
-upgrade test
-uninstall test
-data preservation
-hash
-signature
+npm/pnpm install reproduzível
+typecheck
+lint
+unit tests
+build Vite
+PWA asset validation
+manifest validation
+service worker validation
+E2E smoke test
+deploy staging
+deploy production
+hash de artefatos
 release manifest
 channels
+rollback
 ```
+
+## Desktop
+
+A distribuição desktop inicial será a instalação da PWA.
+
+Tauri somente será adotado mediante ADR futuro se surgir necessidade nativa que a PWA não atenda. Mesmo nesse caso, a UI React será reutilizada.
 
 ## Matrizes
 
 Testar em:
 
 ```text
-Windows 10
-Windows 11
-instalação limpa
+Windows 10/11 com navegador suportado
+desktop largo
+notebook
+tablet
+celular
+instalação PWA
 atualização
-sem internet
-banco antigo
-banco novo
+sem internet para o app shell
 tema claro
 tema escuro
 ```
-
----
-
 # 41. FASE 34 — Hardening
 
 ## Áreas
@@ -2732,7 +2765,7 @@ Design System está integrado
 Clientes funciona de ponta a ponta
 SQLite novo e legado são suportados
 testes automatizados cobrem a fatia
-PyInstaller abre a aplicação
+build React/PWA abre a aplicação e o smoke test E2E passa
 ```
 
 ---

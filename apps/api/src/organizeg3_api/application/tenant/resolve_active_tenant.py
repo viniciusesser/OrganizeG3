@@ -1,29 +1,41 @@
-"""Application service for resolving an active tenant context."""
+"""Resolve and authorize the tenant selected for one request."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import uuid
 
-from organizeg3_api.core.exceptions import TenantUnavailableError
+from organizeg3_api.core.exceptions import PermissionDeniedError
 from organizeg3_api.domain.tenant.repository import ITenantRepository
 
 
-@dataclass(slots=True)
 class ResolveActiveTenant:
-    """Ensure that a tenant exists and can access the platform."""
+    """Confirm that a request tenant exists and is active."""
 
-    repository: ITenantRepository
+    def __init__(
+        self,
+        tenant_repository: ITenantRepository,
+    ) -> None:
+        self._tenant_repository = tenant_repository
 
     def execute(
         self,
         tenant_id: uuid.UUID,
     ) -> uuid.UUID:
-        """Return the tenant identifier after availability validation."""
+        """Return the tenant identifier when access is allowed."""
 
-        if not self.repository.is_active(tenant_id):
-            raise TenantUnavailableError(
-                "A empresa informada não existe ou não está ativa."
+        if tenant_id.int == 0:
+            raise ValueError(
+                "tenant_id não pode ser o UUID nulo."
+            )
+
+        if not self._tenant_repository.exists_active(
+            tenant_id
+        ):
+            raise PermissionDeniedError(
+                "A empresa informada não está disponível para acesso.",
+                details={
+                    "reason": "tenant_unavailable",
+                },
             )
 
         return tenant_id

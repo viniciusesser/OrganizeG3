@@ -7,16 +7,20 @@
 | Propriedade | Valor |
 |---|---|
 | Documento | `ORGANIZEG3_STACK_TECNOLOGICO_OFICIAL.md` |
-| Versão | `1.0.0` |
-| Data da decisão | 2026-08-05 |
+| Versão | `1.1.0` |
+| Data da decisão | 2026-08-08 |
 | Status | Stack oficial aprovada para implementação |
 | Autoridade | Complementar à Especificação Mestra Única |
-| Aplicação inicial | OrganizeG3 Desktop para Windows |
-| Arquitetura-alvo | Desktop offline-first + API + PostgreSQL/Supabase |
+| Aplicação de interface | React/PWA unificado para desktop e mobile |
+| Arquitetura-alvo | React/PWA + FastAPI + PostgreSQL/Supabase |
 | Idioma da documentação | Português |
 | Idioma do código | Inglês |
 | Fuso de exibição padrão | America/Sao_Paulo |
 | Armazenamento de instantes | UTC |
+
+
+> Decisão vinculante de UI/UX: `ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md`.
+> Este ADR substitui PySide6/Qt Widgets como interface principal e elimina a separação entre cliente Desktop e PWA.
 
 ---
 
@@ -74,11 +78,25 @@ Ele define a tecnologia usada para implementar esses contratos.
 A stack oficial do OrganizeG3 será:
 
 ```text
-Linguagem principal
+Backend
 Python 3.13
+FastAPI
+Pydantic 2
+SQLAlchemy 2
+Alembic
+PostgreSQL 17 no Supabase
 
-Desktop
-PySide6 / Qt 6 Widgets
+Frontend
+React 19
+TypeScript 5.x
+Vite
+React Router
+TanStack Query
+TanStack Table
+Zustand
+Zod
+Lucide React
+PWA Plugin / Workbox
 
 Arquitetura
 Modular Monolith
@@ -86,25 +104,6 @@ Clean Architecture
 Domain-Driven Design
 CQRS leve
 Event-driven interno
-Offline-first
-
-ORM
-SQLAlchemy 2
-
-Migrations
-Alembic
-
-Banco local
-SQLite
-
-Banco compartilhado
-PostgreSQL 17 no Supabase
-
-API
-FastAPI
-
-Validação de fronteira
-Pydantic 2
 
 Autenticação
 Supabase Auth
@@ -112,92 +111,88 @@ Supabase Auth
 Arquivos em nuvem
 Supabase Storage
 
-Sincronização
-API própria + Outbox/Inbox + idempotência
+Frontend offline controlado
+Service Worker + IndexedDB adapter quando aplicável
 
 Dependências Python
 uv + pyproject.toml + uv.lock
 
-Qualidade
-Ruff + mypy
+Dependências Frontend
+package manager definido no workspace + lockfile obrigatório
 
-Testes
-pytest + pytest-qt
+Qualidade Python
+Ruff + mypy + pytest
 
-Empacotamento Windows
-PyInstaller em modo onedir
-
-Instalador Windows
-Inno Setup
+Qualidade Frontend
+ESLint + TypeScript + Vitest + React Testing Library + Playwright
 
 Backend
 Container Docker Linux
 
-PWA futura
-React 19 + TypeScript + Vite 8
+Desktop
+PWA instalada
+
+Mobile
+Mesma PWA responsiva
+
+Desktop nativo futuro
+Tauri somente por ADR e sem segunda UI
 
 CI
 GitHub Actions
 ```
-
----
-
 # 4. Decisões fundamentais
 
-## 4.1 O produto inicial é Desktop
+## 4.1 O produto de interface é único e responsivo
 
-A primeira aplicação oficial será:
+A aplicação visual oficial será:
 
 ```text
-OrganizeG3 Desktop
-Sistema operacional inicial: Windows 10 e Windows 11
-Interface: Qt Widgets
-Framework Python: PySide6
+OrganizeG3 Web App
+React 19 + TypeScript + Vite
+PWA instalável
 ```
 
-O Desktop deverá funcionar mesmo quando a internet estiver temporariamente indisponível.
+A mesma base será utilizada em:
 
-A PWA será construída posteriormente utilizando a mesma API e os mesmos contratos de negócio.
+```text
+Desktop
+Notebook
+Tablet
+Celular
+```
 
----
+Não existirão duas implementações funcionais separadas chamadas “Desktop” e “PWA”.
 
-## 4.2 Python será a linguagem principal
+A interface deverá adaptar representação, densidade e navegação ao espaço disponível sem duplicar regras de negócio.
+## 4.2 Python é a linguagem oficial do backend
 
-A linguagem oficial do núcleo, Desktop, API, workers, integrações e automações será Python.
+Python 3.13 é a linguagem oficial para:
 
-Versão-alvo:
+- API;
+- Application Layer;
+- Domain;
+- persistência;
+- workers;
+- integrações;
+- automações;
+- ferramentas de backend.
+
+TypeScript é a linguagem oficial do frontend.
+
+Versão-alvo do backend:
 
 ```text
 Python 3.13.x
 ```
 
-Restrição no projeto:
+Restrição:
 
 ```toml
 requires-python = ">=3.13,<3.14"
 ```
 
-### Motivo da escolha
-
-Embora Python 3.14 já exista, o OrganizeG3 adotará Python 3.13 durante a fundação para:
-
-- reduzir risco de incompatibilidade com bibliotecas;
-- preservar compatibilidade com o código existente;
-- facilitar empacotamento com PyInstaller;
-- evitar migração de linguagem durante a refatoração inicial;
-- utilizar uma linha estável e amplamente suportada.
-
-A migração para Python 3.14 deverá ocorrer apenas após:
-
-- execução completa dos testes;
-- validação do PyInstaller;
-- validação do PySide6;
-- validação dos drivers de banco;
-- criação de ADR;
-- geração de novo `uv.lock`.
-
----
-
+A evolução da versão Python deve seguir testes completos e ADR quando alterar a baseline.
 ## 4.3 Arquitetura modular monolítica
 
 O OrganizeG3 será inicialmente um monólito modular.
@@ -245,31 +240,38 @@ Infrastructure
 
 Responsável por:
 
-- widgets;
-- páginas;
-- dialogs;
-- view models;
-- controllers de apresentação;
+- páginas React;
+- layouts responsivos;
 - navegação;
-- formatação visual;
-- coleta de entrada;
-- apresentação de erros.
+- formulários;
+- tabelas;
+- filtros;
+- dialogs/sheets;
+- feedback visual;
+- acessibilidade;
+- apresentação de erros;
+- integração HTTP com a API.
 
 Tecnologias:
 
 ```text
-PySide6
-Qt Widgets
-Qt Model/View
-Signals e Slots
-QThreadPool
-QRunnable
+React 19
+TypeScript
+Vite
+React Router
+TanStack Query
+TanStack Table
+Zustand
+Zod
+Lucide React
+PWA Plugin / Workbox
+CSS Custom Properties
+Design Tokens
 ```
 
-Presentation não poderá importar modelos ORM.
+Presentation não poderá importar modelos ORM, SQLAlchemy ou repositórios internos.
 
----
-
+Presentation não contém regra de negócio.
 ## 5.2 Application
 
 Responsável por:
@@ -293,7 +295,7 @@ Protocol e ABC para contratos
 Dataclasses quando apropriado
 ```
 
-Application não poderá depender de PySide6.
+Application não poderá depender de React, PySide6 ou qualquer framework de apresentação.
 
 ---
 
@@ -327,7 +329,6 @@ collections
 O Domain não poderá importar:
 
 ```text
-PySide6
 SQLAlchemy
 FastAPI
 Pydantic BaseModel
@@ -507,187 +508,120 @@ Nenhuma ferramenta deverá atualizar dependências automaticamente em produção
 
 # 8. Stack Python oficial
 
-## 8.1 Núcleo
+## 8.1 Núcleo Python
 
 ```text
-Python 3.13.x
-typing
-dataclasses
-enum
-decimal.Decimal
-datetime com timezone
-uuid.UUID
-pathlib
-logging
+Python >=3.13,<3.14
+SQLAlchemy 2
+Alembic
+Pydantic 2
+pydantic-settings
+FastAPI
+psycopg 3
+httpx
+structlog
 ```
 
----
-
-## 8.2 Dependências principais
+A versão exata será definida pelo lockfile Python.
+## 8.2 Dependências Python principais
 
 ```text
-PySide6 >=6.10,<6.11
 SQLAlchemy >=2.0,<2.1
 Alembic >=1.19,<2
 Pydantic >=2,<3
 pydantic-settings >=2,<3
-FastAPI >=0.115,<1
-Uvicorn >=0.30,<1
 httpx >=0.28,<1
-psycopg >=3.2,<4
 Jinja2 >=3.1,<4
+ReportLab >=4,<5
+Pillow >=11,<13
+openpyxl >=3.1,<4
+python-docx >=1.1,<2
 ```
 
-Os limites acima representam famílias aprovadas.
-
-A versão exata será definida pelo `uv.lock`.
-
----
-
-# 9. Desktop — PySide6
+PySide6 não é dependência obrigatória da arquitetura-alvo. Se permanecer no repositório durante a transição, será tratado como legado até a remoção segura.
+# 9. Frontend — React/PWA
 
 ## 9.1 Framework
 
-A interface Desktop utilizará:
+```text
+React 19
+TypeScript 5.x
+Vite
+```
+
+Não utilizar outra framework principal de frontend sem ADR.
+
+## 9.2 Padrão de aplicação
 
 ```text
-PySide6
-Qt 6
-Qt Widgets
+Route
+Page
+Feature Components
+Shared Components
+API Client
+Application API
 ```
 
-Não utilizar:
+Páginas não acessam banco.
+
+## 9.3 Estado
 
 ```text
-PyQt5
-PyQt6
-PySide2
-Tkinter
-Kivy
-Flet
-Electron para o Desktop principal
-QML como stack principal
+TanStack Query = estado do servidor
+Zustand = estado local de interface
+React state = estado local simples de componente
 ```
 
-QML somente poderá ser introduzido mediante ADR e caso de uso específico.
+Não duplicar entidades de servidor no Zustand.
 
----
+## 9.4 Tabelas
 
-## 9.2 Padrão de interface
+TanStack Table é a base oficial.
 
-O Desktop seguirá:
+Cada tabela deve definir:
+
+- colunas essenciais;
+- colunas opcionais;
+- comportamento por breakpoint;
+- filtros;
+- ordenação;
+- paginação;
+- ações;
+- estratégia mobile.
+
+Tabela não é obrigada a permanecer tabela em telas estreitas.
+
+## 9.5 Design System
+
+Toda aparência vem de `theme_design`.
+
+É proibido hardcode visual em páginas e componentes de feature.
+
+## 9.6 Iconografia
+
+Lucide React é a biblioteca oficial.
+
+Ícones são SVG e usam tamanhos/tokens do Design System.
+
+## 9.7 Responsividade
+
+Breakpoints:
 
 ```text
-View
-ViewModel
-Application Service
+sm 640
+md 768
+lg 1024
+xl 1280
+2xl 1536
 ```
 
-A View será um `QWidget`, `QDialog`, `QMainWindow` ou componente Qt equivalente.
+Layout deve ser adaptativo, sem sobreposição e sem depender de largura fixa absoluta.
 
-O ViewModel poderá utilizar `QObject`, signals e properties quando necessário.
+## 9.8 Desktop
 
-A ViewModel não poderá acessar o banco diretamente.
+A forma inicial de instalação desktop é a PWA.
 
----
-
-## 9.3 Threading
-
-A thread principal será reservada à interface.
-
-Operações que poderão bloquear deverão utilizar:
-
-```text
-QThreadPool
-QRunnable
-Signals
-Cancellation Token próprio
-```
-
-Exemplos:
-
-- sincronização;
-- exportação;
-- geração de PDF;
-- consultas extensas;
-- backup;
-- restauração;
-- upload;
-- download;
-- processamento de imagens;
-- relatórios.
-
-Não utilizar `threading.Thread` diretamente em cada página.
-
-Deverá existir um serviço central de execução de tarefas.
-
----
-
-## 9.4 Async no Desktop
-
-Não será utilizado `asyncio` como base do Desktop na primeira fase.
-
-Não utilizar:
-
-```text
-qasync
-AsyncSession
-loops asyncio misturados ao Qt
-```
-
-O cliente HTTP poderá ser executado de forma síncrona dentro de workers Qt.
-
-Essa decisão reduz a complexidade entre o event loop do Qt e o event loop do Python.
-
----
-
-## 9.5 Model/View
-
-Listas e tabelas relevantes deverão utilizar:
-
-```text
-QAbstractTableModel
-QAbstractListModel
-QSortFilterProxyModel
-```
-
-Evitar preencher manualmente milhares de células em `QTableWidget`.
-
-`QTableWidget` será permitido apenas em telas pequenas e estáticas.
-
----
-
-## 9.6 Design System
-
-A aparência será obtida exclusivamente por:
-
-```text
-ThemeManager
-theme_design
-Design Tokens
-IconManager
-Component Factory
-```
-
-Proibido em páginas:
-
-```python
-widget.setStyleSheet("background: #ffffff;")
-```
-
-Proibido:
-
-- cores hexadecimais espalhadas;
-- fontes definidas por módulo;
-- margens fixas não tokenizadas;
-- ícones carregados por caminhos aleatórios;
-- emojis como ícones;
-- estilos duplicados.
-
-Os ícones oficiais serão baseados em Material Symbols/Material Icons no estilo definido pelo Design System.
-
----
-
+Tauri poderá ser adotado somente por ADR futuro se houver requisito nativo comprovado, reutilizando a mesma UI React.
 # 10. Domínio e tipos fundamentais
 
 ## 10.1 Identificadores
@@ -970,81 +904,39 @@ Migrações destrutivas deverão:
 
 ---
 
-# 13. Banco local — SQLite
+# 13. Persistência local do frontend
 
-## 13.1 Função
+## 13.1 Regra geral
 
-O SQLite será utilizado para:
+O frontend web não utiliza SQLite diretamente.
 
-- operação offline;
-- cache controlado;
-- fila de sincronização;
-- dados locais ainda não sincronizados;
-- configurações locais;
-- sessões de trabalho;
-- transição do legado.
-
-O SQLite não será a fonte compartilhada oficial após a implantação da nuvem.
-
----
-
-## 13.2 Configuração obrigatória
-
-Ao abrir cada conexão:
-
-```sql
-PRAGMA foreign_keys = ON;
-PRAGMA journal_mode = WAL;
-PRAGMA synchronous = NORMAL;
-PRAGMA busy_timeout = 5000;
-```
-
-O código deverá validar se os pragmas foram aplicados.
-
----
-
-## 13.3 Arquivo
-
-O banco local deverá ficar em diretório de dados da aplicação, nunca ao lado do executável.
-
-Exemplo Windows:
+Persistência local de dados do navegador, quando necessária, utilizará:
 
 ```text
-%LOCALAPPDATA%\OrganizeG3\data\organizeg3.db
+IndexedDB
+Service Worker Cache
 ```
 
-Backups locais:
+através de adapters próprios.
 
-```text
-%LOCALAPPDATA%\OrganizeG3\backups\
-```
+## 13.2 Offline
 
-Logs:
+Cache de app shell é permitido.
 
-```text
-%LOCALAPPDATA%\OrganizeG3\logs\
-```
+Leitura offline pode ser implementada por feature.
 
-Arquivos temporários:
+Escrita offline somente poderá ser habilitada quando o fluxo possuir:
 
-```text
-%LOCALAPPDATA%\OrganizeG3\temp\
-```
+- idempotência;
+- versionamento;
+- detecção de conflito;
+- retry;
+- auditoria;
+- reconciliação.
 
----
+## 13.3 SQLite
 
-## 13.4 Concorrência
-
-O Desktop deverá utilizar sessões curtas.
-
-Não manter transações abertas enquanto dialogs aguardam interação do usuário.
-
-Operações em background deverão criar sua própria sessão.
-
-Sessões SQLAlchemy não deverão ser compartilhadas entre threads.
-
----
-
+SQLite poderá continuar existindo em ferramentas, migração de legado ou processos Python específicos, mas não é banco local do frontend React/PWA.
 # 14. Banco compartilhado — PostgreSQL no Supabase
 
 ## 14.1 Versão-alvo
@@ -1163,14 +1055,14 @@ Vector
 
 ## 15.2 Serviços que não serão usados como camada de negócio
 
-O Desktop não deverá utilizar PostgREST diretamente para executar regras críticas.
+O frontend não deverá utilizar PostgREST diretamente para executar regras críticas.
 
-O Desktop não deverá gravar diretamente em tabelas compartilhadas.
+O frontend não deverá gravar diretamente em tabelas compartilhadas.
 
 O caminho oficial será:
 
 ```text
-Desktop
+React/PWA
     ↓ HTTPS
 OrganizeG3 API
     ↓
@@ -1317,27 +1209,23 @@ O arquivo OpenAPI versionado deverá ser utilizado para gerar clientes.
 
 ---
 
-## 16.6 Cliente Desktop
+## 16.6 Cliente Frontend
 
-O Desktop utilizará um adapter HTTP central baseado em:
+O frontend utilizará um API Client central.
 
-```text
-httpx
-```
+Responsabilidades:
 
-A UI não deverá construir URLs diretamente.
+- base URL;
+- autenticação;
+- correlation id;
+- device id quando aplicável;
+- parsing padronizado;
+- tratamento de erros HTTP;
+- cancelamento;
+- refresh de sessão;
+- tipagem dos contratos.
 
-Deverá existir:
-
-```text
-ApiClient
-AuthenticationClient
-SyncClient
-DocumentClient
-```
-
----
-
+Páginas não executam `fetch` disperso quando houver client/serviço oficial.
 # 17. Autenticação e identidade
 
 ## 17.1 Provedor
@@ -1359,7 +1247,7 @@ Supabase Auth
     ↓
 Access Token + Refresh Token
     ↓
-Desktop guarda tokens com segurança
+Frontend mantém sessão conforme estratégia de autenticação aprovada
     ↓
 API valida JWT
     ↓
@@ -1368,35 +1256,15 @@ API resolve Tenant, usuário, perfis e permissões
 
 ---
 
-## 17.3 Armazenamento de tokens
+## 17.3 Sessão no frontend
 
-No Desktop, refresh tokens deverão utilizar o cofre de credenciais do sistema operacional.
+Tokens e sessão devem seguir a estratégia suportada pelo Supabase Auth e pelo modelo de segurança aprovado.
 
-Biblioteca aprovada:
+Não persistir segredos em código, variáveis globais ou logs.
 
-```text
-keyring
-```
+O armazenamento no navegador deverá considerar XSS, expiração e rotação.
 
-Proibido armazenar:
-
-- senha;
-- access token;
-- refresh token;
-- chave de API;
-
-em:
-
-```text
-SQLite em texto puro
-arquivo JSON
-arquivo INI
-arquivo .env distribuído
-log
-```
-
----
-
+Qualquer uso de cookies HttpOnly ou estratégia alternativa deverá ser documentado na arquitetura de autenticação.
 ## 17.4 Autorização
 
 A autorização será implementada pela Application Layer.
@@ -1416,99 +1284,44 @@ Ocultar botão não será considerado segurança suficiente.
 
 ---
 
-# 18. Offline-first e sincronização
+# 18. Offline e sincronização
 
 ## 18.1 Estratégia
 
-A sincronização será própria do OrganizeG3.
+O frontend é PWA e pode operar com capacidades offline controladas.
 
-Não dependerá exclusivamente de Supabase Realtime.
+Não assumir que toda feature é offline-first.
 
-Componentes:
-
-```text
-Local Change Log
-Outbox
-Inbox
-Sync Queue
-Idempotency Keys
-Version Field
-Conflict Resolver
-Retry Policy
-Tombstones
-Sync Cursor
-```
-
----
-
-## 18.2 Campos de sincronização
-
-Aplicar quando necessário:
+## 18.2 Persistência local
 
 ```text
-id
-tenant_id
-version
-created_at
-updated_at
-deleted_at
-sync_status
-server_version
-last_synced_at
-origin_device_id
-correlation_id
-idempotency_key
+IndexedDB adapter
+Service Worker cache
 ```
-
-Não adicionar todos os campos automaticamente a toda tabela.
-
-Aplicar conforme o papel da entidade.
-
----
 
 ## 18.3 Fonte oficial
 
-Após sincronização confirmada:
+PostgreSQL/Supabase permanece a fonte compartilhada oficial.
 
-```text
-PostgreSQL = fonte oficial compartilhada
-SQLite = réplica local controlada
-```
+## 18.4 Escrita offline
 
-Registros ainda não enviados permanecerão na Outbox local.
+Somente features explicitamente aprovadas poderão enfileirar comandos offline.
 
----
+Requisitos:
 
-## 18.4 Conflitos
+- command id;
+- idempotency key;
+- tenant context;
+- actor context;
+- device context;
+- versionamento;
+- conflito;
+- retry;
+- auditoria.
 
-Estratégias permitidas:
+## 18.5 Conflitos
 
-```text
-Versionamento otimista
-Rejeição por versão
-Merge específico por agregado
-Evento compensatório
-Revisão manual
-```
-
-Proibido:
-
-```text
-last write wins universal
-sobrescrever silenciosamente
-ignorar conflito
-```
-
----
-
-## 18.5 Idempotência
-
-Toda operação repetível deverá possuir `idempotency_key`.
-
-A API deverá reconhecer uma repetição e retornar o resultado anterior quando apropriado.
-
----
-
+Conflitos não podem ser resolvidos silenciosamente quando houver risco de perda de informação.
 # 19. Eventos, Outbox e auditoria
 
 ## 19.1 Event Bus
@@ -1581,8 +1394,8 @@ Dados secretos não poderão ser inseridos na auditoria.
 Na fundação, tarefas locais utilizarão:
 
 ```text
-QThreadPool no Desktop
-serviços síncronos na API
+serviços síncronos/assíncronos controlados na API
+workers externos quando a tarefa exigir durabilidade
 ```
 
 FastAPI `BackgroundTasks` somente poderá ser usado para tarefas pequenas e não críticas.
@@ -1764,24 +1577,13 @@ O hash será utilizado para:
 
 # 23. Relatórios, gráficos e BI
 
-## 23.1 Desktop
+## 23.1 Frontend
 
-Para gráficos padrão:
+Gráficos devem ser renderizados com biblioteca React aprovada e consumir tokens do Design System.
 
-```text
-PySide6.QtCharts
-```
+A escolha da biblioteca de gráficos deverá ser registrada quando a primeira tela analítica for implementada.
 
-Para relatórios estáticos e exportações específicas:
-
-```text
-matplotlib
-```
-
-Matplotlib não deverá controlar o estilo geral do Desktop.
-
----
-
+Não usar imagens estáticas quando o gráfico precisar ser responsivo ou interativo.
 ## 23.2 Consultas analíticas
 
 A primeira fase utilizará:
@@ -1846,29 +1648,17 @@ Esses serviços somente serão avaliados quando PostgreSQL não atender aos requ
 
 # 25. Logs e observabilidade
 
-## 25.1 Desktop
+## 25.1 Frontend
 
-Utilizar:
+Erros de frontend devem ser observáveis sem expor dados sensíveis.
 
-```text
-logging da Standard Library
-RotatingFileHandler
-formato estruturado
-correlation_id
-user_id quando permitido
-tenant_id
-module
-event
-```
+O frontend deverá possuir:
 
-Diretório:
-
-```text
-%LOCALAPPDATA%\OrganizeG3\logs\
-```
-
----
-
+- Error Boundary;
+- correlation id;
+- captura de falhas de API;
+- logs controlados em desenvolvimento;
+- integração futura com ferramenta de monitoramento aprovada.
 ## 25.2 API
 
 Utilizar:
@@ -1984,73 +1774,55 @@ Desenvolvimento:
 
 ---
 
-# 28. PWA futura
+# 28. PWA oficial
 
-## 28.1 Stack
+## 28.1 Status
+
+A PWA não é futura nem um segundo cliente.
+
+Ela é a forma oficial da aplicação React para desktop e mobile.
+
+## 28.2 Stack
 
 ```text
-TypeScript 5.x
+TypeScript
 React 19
-Vite 8
-TanStack Query 5
+Vite
+TanStack Query
+TanStack Table
 Zustand
 React Router
-PWA Plugin/Workbox
+Zod
+Lucide React
+PWA Plugin / Workbox
 CSS variables e Design Tokens
 ```
 
----
+## 28.3 Comunicação
 
-## 28.2 Comunicação
+A PWA utiliza a API FastAPI.
 
-A PWA utilizará a mesma API FastAPI.
+Não acessa tabelas PostgreSQL/Supabase diretamente para executar comandos de negócio.
 
-Não acessará tabelas do Supabase diretamente para comandos de negócio.
-
----
-
-## 28.3 Estado
+## 28.4 Estado
 
 ```text
 TanStack Query = estado do servidor
 Zustand = estado local da interface
 ```
 
-Não duplicar dados de servidor no Zustand.
+## 28.5 Design System
 
----
+Todos os breakpoints, tamanhos, cores, ícones, tipografia, espaçamentos e estados vêm de `theme_design`.
 
-## 28.4 Design System
-
-Desktop e PWA compartilharão:
-
-- nomes dos tokens;
-- paleta;
-- tipografia;
-- espaçamentos;
-- status;
-- iconografia;
-- regras de componentes.
-
-Eles não compartilharão o mesmo código de widget, pois utilizam tecnologias diferentes.
-
----
-
-## 28.5 Offline
-
-A PWA utilizará:
+## 28.6 Offline
 
 ```text
-Service Worker
-IndexedDB
-fila local
-sincronização pela API
+Service Worker = app shell/cache
+IndexedDB = persistência local quando necessária
 ```
 
-A mesma semântica de idempotência e conflitos será preservada.
-
----
-
+Fila offline de comandos somente para fluxos aprovados.
 # 29. Inteligência Artificial
 
 ## 29.1 Arquitetura
@@ -2106,7 +1878,6 @@ A IA:
 
 ```text
 pytest
-pytest-qt
 pytest-cov
 pytest-mock
 pytest-asyncio somente para componentes realmente assíncronos
@@ -2149,23 +1920,24 @@ Não validar migrations apenas no SQLite.
 
 ## 30.4 UI
 
-Utilizar `pytest-qt`.
+Ferramentas oficiais:
+
+```text
+Vitest
+React Testing Library
+Playwright
+```
 
 Testar:
 
-- abertura;
-- ações;
-- permissões;
-- validações;
-- signals;
-- estados vazios;
-- erros;
-- workers;
-- encerramento;
-- regressões críticas.
+- renderização;
+- estados;
+- acessibilidade básica;
+- responsividade crítica;
+- fluxos E2E;
+- permissões visuais sem substituir validação do backend.
 
----
-
+`pytest-qt` não faz parte da arquitetura-alvo.
 ## 30.5 Cobertura
 
 Metas iniciais:
@@ -2237,81 +2009,34 @@ Dependências vulneráveis deverão ser avaliadas antes da entrega.
 # 32. Estrutura do repositório
 
 ```text
-organizeg3/
-├── pyproject.toml
-├── uv.lock
-├── .python-version
-├── README.md
-├── src/
-│   └── organizeg3/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── bootstrap/
-│       │   ├── application.py
-│       │   ├── composition_root.py
-│       │   └── settings.py
-│       ├── core/
-│       │   ├── auth/
-│       │   ├── audit/
-│       │   ├── database/
-│       │   ├── documents/
-│       │   ├── errors/
-│       │   ├── events/
-│       │   ├── logging/
-│       │   ├── permissions/
-│       │   ├── sync/
-│       │   ├── tasks/
-│       │   └── theme_design/
-│       ├── modules/
-│       │   ├── customers/
-│       │   │   ├── domain/
-│       │   │   ├── application/
-│       │   │   ├── infrastructure/
-│       │   │   └── presentation/
-│       │   ├── projects/
-│       │   ├── budgets/
-│       │   ├── purchases/
-│       │   ├── inventory/
-│       │   ├── pcp/
-│       │   ├── production/
-│       │   ├── quality/
-│       │   ├── shipping/
-│       │   ├── installation/
-│       │   ├── technical_support/
-│       │   ├── finance/
-│       │   ├── hr/
-│       │   ├── fiscal/
-│       │   └── bi/
-│       └── shared/
-│           ├── domain/
-│           ├── application/
-│           ├── infrastructure/
-│           └── presentation/
-├── api/
-│   └── organizeg3_api/
-├── migrations/
-│   ├── env.py
-│   └── versions/
-├── tests/
-│   ├── unit/
-│   ├── integration/
+PROGRAMA/
+├── apps/
 │   ├── api/
-│   ├── ui/
-│   └── fixtures/
+│   │   ├── src/
+│   │   └── tests/
+│   └── web/
+│       ├── src/
+│       │   ├── app/
+│       │   ├── components/
+│       │   ├── features/
+│       │   ├── layouts/
+│       │   ├── lib/
+│       │   └── theme_design/
+│       ├── public/
+│       ├── tests/
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── vite.config.ts
+├── database/
+├── docs/
+├── packages/
 ├── scripts/
-├── resources/
-├── packaging/
-│   ├── pyinstaller/
-│   └── windows/
-└── docs/
+└── ADR-UI-001_FRONTEND_UNIFICADO_REACT_PWA.md
 ```
 
-Não criar uma pasta global de `models` contendo todo o ERP indefinidamente.
+`apps/desktop` e `apps/pwa` não representam mais clientes oficiais separados.
 
-Cada módulo deverá possuir seus contratos e implementações.
-
----
-
+Código legado pode permanecer temporariamente até a migração e remoção segura.
 # 33. Composition Root e injeção de dependência
 
 A injeção será explícita.
@@ -2336,125 +2061,42 @@ Proibido instanciar repositórios aleatoriamente dentro de widgets.
 
 ---
 
-# 34. Empacotamento Desktop
+# 34. Build e distribuição do frontend
 
-## 34.1 Ferramenta
-
-```text
-PyInstaller
-```
-
-Modo oficial:
+## 34.1 Build
 
 ```text
-onedir
+Vite production build
+PWA manifest
+Service Worker
+asset hashing
 ```
 
-Não utilizar `onefile` como distribuição principal.
+## 34.2 Desktop
 
-### Motivos
+A instalação desktop inicial será a PWA instalada.
 
-- inicialização mais rápida;
-- menos extração temporária;
-- melhor diagnóstico;
-- atualização de arquivos mais controlável;
-- menor complexidade com plugins Qt;
-- melhor manutenção.
+## 34.3 Tauri
 
----
+Tauri não é necessário para a primeira entrega React.
 
-## 34.2 Spec
+Só poderá ser introduzido mediante ADR quando existir requisito nativo comprovado.
 
-Deverá existir:
+## 34.4 Regra
 
-```text
-packaging/pyinstaller/organizeg3.spec
-```
+Mesmo com wrapper nativo futuro, não criar uma segunda UI.
+# 35. Atualização do frontend
 
-O `.spec` será versionado.
+A atualização da aplicação ocorrerá pelo mecanismo de deploy web/PWA.
 
-Ele deverá incluir explicitamente:
+Regras:
 
-- recursos;
-- ícones;
-- traduções Qt necessárias;
-- plugins;
-- templates;
-- migrations;
-- certificados públicos;
-- arquivos do Design System.
-
----
-
-## 34.3 Instalador
-
-```text
-Inno Setup
-```
-
-O instalador deverá:
-
-- instalar em diretório adequado;
-- criar atalhos;
-- registrar versão;
-- preservar dados do usuário;
-- permitir atualização;
-- não excluir banco local;
-- não armazenar dados dentro de `Program Files`;
-- incluir desinstalador;
-- verificar arquitetura do Windows.
-
----
-
-## 34.4 Assinatura
-
-Executáveis e instaladores deverão ser assinados quando o certificado estiver disponível.
-
-O sistema de atualização deverá validar:
-
-- assinatura;
-- hash;
-- versão;
-- canal;
-- compatibilidade de banco.
-
----
-
-# 35. Atualização do Desktop
-
-Deverá existir um `UpdateService`.
-
-Canais:
-
-```text
-stable
-beta
-development
-```
-
-Manifesto:
-
-```json
-{
-  "version": "1.2.3",
-  "channel": "stable",
-  "minimum_schema_version": "20260805_01",
-  "download": "...",
-  "sha256": "...",
-  "signature": "..."
-}
-```
-
-O Desktop não poderá atualizar durante:
-
-- backup;
-- migration;
-- sincronização;
-- transação ativa;
-- produção crítica configurada.
-
----
-
+- assets versionados;
+- service worker com política explícita;
+- atualização não pode corromper estado local;
+- mudanças incompatíveis no IndexedDB precisam de migração;
+- rollback de deploy deve ser possível;
+- usuário deve receber feedback quando uma atualização exigir reload.
 # 36. Backend e implantação
 
 ## 36.1 Container
@@ -2540,7 +2182,7 @@ mypy src
 pytest
 teste de migrations SQLite
 teste de migrations PostgreSQL
-build de importação do Desktop
+build do frontend React/PWA
 ```
 
 ---
@@ -2548,20 +2190,20 @@ build de importação do Desktop
 ## 37.3 Pipeline de release
 
 ```text
-testes completos
-build PyInstaller em Windows
-teste de inicialização
-geração do instalador
-geração de hashes
-assinatura
-publicação do artefato
-publicação do manifesto
-tag Git
-release notes
+Backend tests
+Frontend lint
+Frontend typecheck
+Frontend unit tests
+Frontend build
+Playwright smoke test
+PWA validation
+Container build da API
+Deploy staging
+migrations controladas
+Deploy frontend
+smoke tests
+release metadata
 ```
-
----
-
 # 38. Git
 
 Estratégia:
@@ -2611,100 +2253,75 @@ Código e documentação deverão evoluir juntos.
 
 # 40. Dependências aprovadas por finalidade
 
-## 40.1 Obrigatórias na fundação
+## 40.1 Backend obrigatório
 
 ```text
-pyside6
 sqlalchemy
 alembic
 pydantic
 pydantic-settings
-httpx
-keyring
-jinja2
-reportlab
-pillow
-openpyxl
-python-docx
-```
-
----
-
-## 40.2 API
-
-```text
 fastapi
 uvicorn
 psycopg
-python-multipart quando necessário
-```
-
----
-
-## 40.3 Desenvolvimento
-
-```text
-pytest
-pytest-qt
-pytest-cov
-pytest-mock
-ruff
-mypy
-pip-audit
-```
-
----
-
-## 40.4 Fase posterior
-
-```text
-celery
-redis
+httpx
 structlog
-opentelemetry
-sentry-sdk
-matplotlib
 ```
 
-Uma dependência de fase posterior não deverá ser adicionada apenas porque pode ser útil futuramente.
+## 40.2 Frontend obrigatório
 
----
+```text
+react
+react-dom
+typescript
+vite
+react-router
+@tanstack/react-query
+@tanstack/react-table
+zustand
+zod
+lucide-react
+PWA Plugin / Workbox
+```
 
+## 40.3 Desenvolvimento frontend
+
+```text
+eslint
+vitest
+@testing-library/react
+@testing-library/jest-dom
+playwright
+```
+
+Dependências visuais ou de componentes adicionais devem ser justificadas antes da adoção.
 # 41. Tecnologias explicitamente não escolhidas
 
-Não utilizar como stack principal:
+Não utilizar como stack principal sem ADR:
 
 ```text
-Django
-Flask
-Electron
-Tauri para o Desktop inicial
+PySide6/Qt Widgets para novas telas
 PyQt
 Flet
 Kivy
 Tkinter
-MongoDB
+Electron
+Next.js
+Angular
+Vue
+Svelte
+GraphQL como API principal
+MongoDB como banco principal
 Firebase como banco principal
 Prisma no núcleo Python
-GraphQL como API principal
-Kafka
+Kafka na fundação
 RabbitMQ na fundação
 Elasticsearch na fundação
 Kubernetes na fundação
 Microserviços por módulo
-LangChain no núcleo
-LlamaIndex no núcleo
-Airflow como workflow do ERP
-Temporal na fundação
 ```
 
-Isso não significa que essas tecnologias sejam ruins.
-
-Significa que não fazem parte da decisão atual.
-
----
-
-# 42. Exemplo de `pyproject.toml`
+Tauri é permitido somente por ADR futuro para encapsular a mesma aplicação React quando houver necessidade nativa real.
+# 42. Exemplos de manifests de dependência
 
 ```toml
 [project]
@@ -2713,7 +2330,6 @@ version = "0.1.0"
 description = "OrganizeG3 ERP"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "pyside6>=6.10,<6.11",
     "sqlalchemy>=2.0,<2.1",
     "alembic>=1.19,<2",
     "pydantic>=2,<3",
@@ -2736,7 +2352,6 @@ api = [
 ]
 dev = [
     "pytest>=8,<10",
-    "pytest-qt>=4.4,<5",
     "pytest-cov>=6,<8",
     "pytest-mock>=3.14,<4",
     "ruff>=0.12,<1",
@@ -2774,7 +2389,7 @@ markers = [
     "database: testes de banco",
     "migration: testes de migration",
     "api: testes da API",
-    "ui: testes PySide6",
+    "ui: testes de integração de apresentação quando houver legado",
     "sync: testes de sincronização",
     "slow: testes demorados",
 ]
@@ -2785,6 +2400,31 @@ As versões exatas deverão ser resolvidas e registradas no `uv.lock`.
 O exemplo deverá ser adaptado ao workspace real sem apagar dependências legítimas existentes.
 
 ---
+
+
+## Frontend
+
+O frontend possui `package.json` próprio em `apps/web`.
+
+As versões exatas devem ser travadas pelo lockfile do workspace frontend.
+
+Dependências mínimas:
+
+```text
+react
+react-dom
+typescript
+vite
+react-router
+@tanstack/react-query
+@tanstack/react-table
+zustand
+zod
+lucide-react
+vitest
+@testing-library/react
+playwright
+```
 
 # 43. Ordem de adoção da stack
 
@@ -2856,7 +2496,7 @@ PostgreSQL 17
 psycopg 3
 RLS
 OpenAPI
-ApiClient Desktop
+API Client frontend
 ```
 
 ---
@@ -2889,20 +2529,20 @@ Agendamentos
 
 ---
 
-## Fase 6 — PWA
+## Fase 6 — PWA hardening
 
 ```text
-React
-TypeScript
-Vite
-TanStack Query
-Zustand
+manifest
+service worker
 IndexedDB
-Service Worker
+offline controlado
+installability
+push
+mobile ergonomics
+device tests
 ```
 
----
-
+A PWA já existe desde a fundação do frontend; esta fase apenas amadurece capacidades específicas.
 ## Fase 7 — BI e IA
 
 ```text
@@ -2959,10 +2599,9 @@ Você deverá:
 
 Você não poderá:
 
-- trocar PySide6 por outro framework;
-- colocar SQLAlchemy em widgets;
+- colocar SQLAlchemy em componentes React;
 - introduzir AsyncSession;
-- acessar PostgreSQL diretamente pelo Desktop;
+- acessar PostgreSQL diretamente pelo frontend;
 - gravar tokens em texto puro;
 - adicionar Redis antes da fase autorizada;
 - criar microserviços;
@@ -3016,10 +2655,10 @@ Qual problema ela resolve?
 Já existe solução aprovada?
 É obrigatória agora?
 Funciona com Python 3.13?
-Funciona com PyInstaller?
+Funciona com o runtime/backend ou browser alvo?
 Funciona no Windows?
 Possui licença compatível?
-Aumenta significativamente o executável?
+Aumenta significativamente o bundle ou imagem?
 Existe alternativa na Standard Library?
 ```
 
@@ -3046,21 +2685,18 @@ Ao alterar persistência:
 
 ## 44.7 UI
 
-Ao alterar uma tela:
+Ao alterar frontend:
 
-1. preservar o Design System;
-2. não bloquear a UI;
-3. utilizar componentes compartilhados;
-4. validar permissões;
-5. tratar vazio, loading e erro;
-6. manter acessibilidade;
-7. fornecer tooltip em ícones;
-8. não sobrepor cards;
-9. não depender somente de drag and drop;
-10. testar abertura e encerramento.
-
----
-
+1. ler o Design System;
+2. usar `theme_design`;
+3. não hardcodar valores visuais;
+4. verificar desktop, tablet e mobile;
+5. definir comportamento responsivo das tabelas;
+6. usar Lucide React;
+7. usar TanStack Query para server state;
+8. não colocar regra de negócio em componentes;
+9. não acessar banco diretamente;
+10. executar testes unitários e E2E aplicáveis.
 # 45. Critérios de conclusão
 
 Uma funcionalidade somente estará pronta quando:
@@ -3068,58 +2704,88 @@ Uma funcionalidade somente estará pronta quando:
 ```text
 Arquitetura respeitada
 Stack respeitada
-Domínio implementado
+Domínio implementado quando aplicável
 Caso de uso implementado
-Persistência implementada
-Migration criada
+Persistência implementada quando aplicável
+Migration criada quando aplicável
 Permissão aplicada
 Auditoria aplicada
-Evento emitido
-UI integrada
+Evento emitido quando aplicável
+API integrada
+UI React integrada
+Responsividade validada
 Erros tratados
-Testes executados
+Testes backend executados
+Testes frontend executados
 Ruff aprovado
 mypy aprovado
-PyInstaller avaliado quando aplicável
+TypeScript aprovado
+lint frontend aprovado
+build Vite aprovado
+E2E crítico aprovado
 Documentação atualizada
 ```
-
----
-
 # 46. Comandos oficiais de validação
 
-```bash
-uv lock --check
-uv sync --locked
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy src
-uv run pytest
-uv run alembic upgrade head
-uv run python -m organizeg3
-```
-
-Build Desktop:
+Backend:
 
 ```bash
-uv run pyinstaller packaging/pyinstaller/organizeg3.spec --clean
+python -m ruff check apps/api/src apps/api/tests
+python -m mypy apps/api/src scripts
+python -m pytest
+python -m alembic upgrade head
+python -m alembic check
 ```
 
 API local:
 
 ```bash
-uv run --group api uvicorn organizeg3_api.main:app --reload
+uvicorn organizeg3_api.main:app --reload
 ```
 
-Os caminhos deverão ser ajustados ao workspace real sem alterar o padrão.
+Frontend, usando o package manager oficial do workspace:
 
----
+```bash
+lint
+typecheck
+test
+build
+playwright test
+```
 
+Os scripts exatos deverão ser definidos em `apps/web/package.json` e executados pelo lockfile oficial.
 # 47. Resumo definitivo para implementação
 
 ```text
+Frontend:
+React 19 + TypeScript + Vite + PWA
+
 Desktop:
-Python 3.13 + PySide6 Qt Widgets
+mesma PWA instalada
+
+Mobile:
+mesma PWA responsiva
+
+UI state:
+Zustand
+
+Server state:
+TanStack Query
+
+Tabelas:
+TanStack Table
+
+Validação frontend:
+Zod
+
+Ícones:
+Lucide React
+
+Design:
+theme_design + Design Tokens
+
+Backend:
+Python 3.13 + FastAPI + Pydantic 2
 
 Arquitetura:
 Modular Monolith + Clean Architecture + DDD
@@ -3127,14 +2793,11 @@ Modular Monolith + Clean Architecture + DDD
 Persistência:
 SQLAlchemy 2 + Alembic
 
-Offline:
-SQLite + Outbox/Inbox
-
-Servidor:
-FastAPI + Pydantic 2 + SQLAlchemy síncrono
-
 Banco compartilhado:
 PostgreSQL 17 no Supabase
+
+Offline frontend:
+Service Worker + IndexedDB quando aplicável
 
 Identidade:
 Supabase Auth
@@ -3142,39 +2805,20 @@ Supabase Auth
 Arquivos:
 Supabase Storage
 
-HTTP:
-httpx
+Qualidade backend:
+Ruff + mypy + pytest
 
-Jobs futuros:
-Celery + Redis
+Qualidade frontend:
+ESLint + TypeScript + Vitest + React Testing Library + Playwright
 
-Documentos:
-Jinja2 + ReportLab + python-docx + openpyxl
-
-Qualidade:
-uv + Ruff + mypy
-
-Testes:
-pytest + pytest-qt
-
-Empacotamento:
-PyInstaller onedir + Inno Setup
-
-PWA futura:
-React 19 + TypeScript + Vite 8
-
-CI:
-GitHub Actions
+Desktop nativo futuro:
+Tauri somente por ADR e reutilizando a mesma UI
 ```
-
----
-
 # 48. Fontes oficiais verificadas para a decisão
 
 A definição de versões e compatibilidade foi conferida, em 5 de agosto de 2026, nas documentações oficiais de:
 
 - Python;
-- Qt for Python/PySide6;
 - SQLAlchemy;
 - Alembic;
 - FastAPI;
@@ -3185,7 +2829,6 @@ A definição de versões e compatibilidade foi conferida, em 5 de agosto de 202
 - Ruff;
 - pytest;
 - mypy;
-- PyInstaller;
 - React;
 - Vite;
 - TanStack Query.
