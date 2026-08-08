@@ -85,6 +85,17 @@ class ServicePermissions:
     REACTIVATE = "services.reactivate"
 
 
+class MachinePermissions:
+    """Permission codes for machine operations."""
+
+    READ = "machines.read"
+    CREATE = "machines.create"
+    UPDATE = "machines.update"
+    CHANGE_STATUS = "machines.change_status"
+    DEACTIVATE = "machines.deactivate"
+    REACTIVATE = "machines.reactivate"
+
+
 PERMISSION_CATALOG = (
     PermissionDefinition(
         code=CustomerPermissions.READ,
@@ -350,6 +361,54 @@ PERMISSION_CATALOG = (
         action="reactivate",
         description="Permite reativar serviços do tenant.",
     ),
+    PermissionDefinition(
+        code=MachinePermissions.READ,
+        name="Visualizar máquinas",
+        module="machines",
+        resource="machines",
+        action="read",
+        description="Permite consultar máquinas do tenant.",
+    ),
+    PermissionDefinition(
+        code=MachinePermissions.CREATE,
+        name="Criar máquinas",
+        module="machines",
+        resource="machines",
+        action="create",
+        description="Permite criar máquinas no tenant.",
+    ),
+    PermissionDefinition(
+        code=MachinePermissions.UPDATE,
+        name="Atualizar máquinas",
+        module="machines",
+        resource="machines",
+        action="update",
+        description="Permite atualizar os dados cadastrais das máquinas do tenant.",
+    ),
+    PermissionDefinition(
+        code=MachinePermissions.CHANGE_STATUS,
+        name="Alterar status de máquinas",
+        module="machines",
+        resource="machines",
+        action="change_status",
+        description="Permite alterar o status operacional das máquinas do tenant.",
+    ),
+    PermissionDefinition(
+        code=MachinePermissions.DEACTIVATE,
+        name="Desativar máquinas",
+        module="machines",
+        resource="machines",
+        action="deactivate",
+        description="Permite desativar máquinas do tenant.",
+    ),
+    PermissionDefinition(
+        code=MachinePermissions.REACTIVATE,
+        name="Reativar máquinas",
+        module="machines",
+        resource="machines",
+        action="reactivate",
+        description="Permite reativar máquinas do tenant.",
+    ),
 )
 
 
@@ -368,6 +427,7 @@ __all__ = [
     "CompanyPermissions",
     "CustomerPermissions",
     "EmployeePermissions",
+    "MachinePermissions",
     "MaterialPermissions",
     "PermissionDefinition",
     "ServicePermissions",

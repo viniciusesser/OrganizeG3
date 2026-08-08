@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 import uuid
 
 from organizeg3_api.domain.machine.value_objects import (
@@ -118,6 +118,53 @@ class Machine:
             created_at=now,
             updated_at=now,
         )
+
+    def update_details(
+        self,
+        *,
+        code: str,
+        name: str,
+        machine_type: str,
+        branch_id: uuid.UUID | None,
+        manufacturer: str | None,
+        model: str | None,
+        serial_number: str | None,
+    ) -> None:
+        """Atomically update editable machine details."""
+
+        candidate = replace(
+            self,
+            code=code,
+            name=name,
+            machine_type=machine_type,
+            branch_id=branch_id,
+            manufacturer=manufacturer,
+            model=model,
+            serial_number=serial_number,
+        )
+
+        changed = (
+            self.code != candidate.code
+            or self.name != candidate.name
+            or self.machine_type != candidate.machine_type
+            or self.branch_id != candidate.branch_id
+            or self.manufacturer != candidate.manufacturer
+            or self.model != candidate.model
+            or self.serial_number != candidate.serial_number
+        )
+
+        if not changed:
+            return
+
+        self.code = candidate.code
+        self.name = candidate.name
+        self.machine_type = candidate.machine_type
+        self.branch_id = candidate.branch_id
+        self.manufacturer = candidate.manufacturer
+        self.model = candidate.model
+        self.serial_number = candidate.serial_number
+
+        self._touch()
 
     def assign_branch(
         self,
@@ -241,5 +288,37 @@ class Machine:
                 "não pode possuir UUID nulo."
             )
 
+    @staticmethod
+    def _next_timestamp(
+        previous: datetime | None,
+    ) -> datetime:
+        """Return a UTC timestamp strictly newer than the previous one."""
+
+        now = datetime.now(UTC)
+
+        if previous is None:
+            return now
+
+        if previous.tzinfo is None:
+            normalized_previous = previous.replace(
+                tzinfo=UTC
+            )
+        else:
+            normalized_previous = previous.astimezone(
+                UTC
+            )
+
+        if now > normalized_previous:
+            return now
+
+        return (
+            normalized_previous
+            + timedelta(
+                microseconds=1
+            )
+        )
+
     def _touch(self) -> None:
-        self.updated_at = datetime.now(UTC)
+        self.updated_at = self._next_timestamp(
+            self.updated_at
+        )
