@@ -1,0 +1,25 @@
+.og3-card {
+    overflow: hidden;
+
+    color: var(--og3-text-primary);
+    background: var(--og3-surface-raised);
+
+    border: 1px solid var(--og3-border-subtle);
+    border-radius: var(--og3-radius-lg);
+
+    box-shadow: var(--og3-shadow-sm);
+}
+
+.og3-card__header {
+    padding: var(--og3-space-5);
+    border-bottom: 1px solid var(--og3-border-subtle);
+}
+
+.og3-card__body {
+    padding: var(--og3-space-5);
+}
+
+.og3-card__footer {
+    padding: var(--og3-space-5);
+    border-top: 1px solid var(--og3-border-subtle);
+}

@@ -1,0 +1,8 @@
+:root {
+    --og3-opacity-disabled: 0.5;
+    --og3-opacity-muted: 0.72;
+
+    --og3-transition-fast: 120ms ease;
+    --og3-transition-normal: 180ms ease;
+    --og3-transition-slow: 260ms ease;
+}

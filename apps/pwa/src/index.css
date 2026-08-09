@@ -3,3 +3,32 @@
 *::after {
   box-sizing: border-box;
 }
+
+html {
+  min-height: 100%;
+  background: var(--og3-surface-page);
+}
+
+body {
+  min-width: 100%;
+  min-height: 100vh;
+  margin: var(--og3-space-0);
+
+  font-family: var(--og3-font-family-sans);
+  font-size: var(--og3-font-size-md);
+  line-height: var(--og3-line-height-normal);
+
+  color: var(--og3-text-primary);
+  background: var(--og3-surface-page);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: var(--og3-accent-default);
+}

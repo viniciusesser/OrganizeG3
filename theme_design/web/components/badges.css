@@ -1,0 +1,37 @@
+.og3-badge {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: var(--og3-control-height-sm);
+    padding-inline: var(--og3-space-2);
+
+    border-radius: var(--og3-radius-full);
+
+    font-size: var(--og3-font-size-xs);
+    font-weight: var(--og3-font-weight-semibold);
+}
+
+.og3-badge--neutral {
+    color: var(--og3-text-secondary);
+    background: var(--og3-surface-interactive);
+}
+
+.og3-badge--success {
+    color: var(--og3-status-success);
+    background: var(--og3-surface-interactive);
+}
+
+.og3-badge--warning {
+    color: var(--og3-status-warning);
+    background: var(--og3-surface-interactive);
+}
+
+.og3-badge--danger {
+    color: var(--og3-status-danger);
+    background: var(--og3-surface-interactive);
+}
+
+.og3-badge--accent {
+    color: var(--og3-accent-default);
+    background: var(--og3-surface-interactive);
+}

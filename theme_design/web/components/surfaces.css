@@ -1,0 +1,19 @@
+.og3-surface {
+    color: var(--og3-text-primary);
+}
+
+.og3-surface--page {
+    background: var(--og3-surface-page);
+}
+
+.og3-surface--base {
+    background: var(--og3-surface-base);
+}
+
+.og3-surface--raised {
+    background: var(--og3-surface-raised);
+}
+
+.og3-surface--overlay {
+    background: var(--og3-surface-overlay);
+}

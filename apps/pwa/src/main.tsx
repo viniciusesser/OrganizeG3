@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import "@organizeg3/theme-design/theme.css";
+
 import { App } from "@/app/App";
 import { AppProviders } from "@/app/providers/AppProviders";
 

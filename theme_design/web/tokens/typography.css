@@ -1,0 +1,27 @@
+:root {
+    --og3-font-family-sans:
+        Inter,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    --og3-font-size-xs: 0.75rem;
+    --og3-font-size-sm: 0.875rem;
+    --og3-font-size-md: 1rem;
+    --og3-font-size-lg: 1.125rem;
+    --og3-font-size-xl: 1.25rem;
+    --og3-font-size-2xl: 1.5rem;
+    --og3-font-size-3xl: 1.875rem;
+    --og3-font-size-4xl: 2.25rem;
+
+    --og3-font-weight-regular: 400;
+    --og3-font-weight-medium: 500;
+    --og3-font-weight-semibold: 600;
+    --og3-font-weight-bold: 700;
+
+    --og3-line-height-tight: 1.2;
+    --og3-line-height-normal: 1.5;
+    --og3-line-height-relaxed: 1.7;
+}

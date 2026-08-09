@@ -1,0 +1,60 @@
+.og3-field {
+    display: grid;
+    gap: var(--og3-space-2);
+}
+
+.og3-field__label {
+    color: var(--og3-text-secondary);
+
+    font-size: var(--og3-font-size-sm);
+    font-weight: var(--og3-font-weight-medium);
+}
+
+.og3-field__input {
+    width: 100%;
+    min-height: var(--og3-control-height-md);
+    padding-inline: var(--og3-space-3);
+
+    color: var(--og3-text-primary);
+    background: var(--og3-surface-base);
+
+    border: 1px solid var(--og3-border-default);
+    border-radius: var(--og3-radius-md);
+
+    outline: none;
+
+    transition:
+        border-color var(--og3-transition-fast),
+        background-color var(--og3-transition-fast);
+}
+
+.og3-field__input::placeholder {
+    color: var(--og3-text-muted);
+}
+
+.og3-field__input:hover:not(:disabled) {
+    border-color: var(--og3-border-strong);
+}
+
+.og3-field__input:focus {
+    border-color: var(--og3-focus-ring);
+}
+
+.og3-field__input:disabled {
+    cursor: not-allowed;
+    opacity: var(--og3-opacity-disabled);
+}
+
+.og3-field__input[aria-invalid="true"] {
+    border-color: var(--og3-status-danger);
+}
+
+.og3-field__support {
+    color: var(--og3-text-muted);
+    font-size: var(--og3-font-size-xs);
+}
+
+.og3-field__error {
+    color: var(--og3-status-danger);
+    font-size: var(--og3-font-size-xs);
+}

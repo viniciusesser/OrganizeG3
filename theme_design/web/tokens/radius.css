@@ -1,0 +1,9 @@
+:root {
+    --og3-radius-none: 0;
+    --og3-radius-xs: 0.25rem;
+    --og3-radius-sm: 0.375rem;
+    --og3-radius-md: 0.5rem;
+    --og3-radius-lg: 0.75rem;
+    --og3-radius-xl: 1rem;
+    --og3-radius-full: 9999px;
+}

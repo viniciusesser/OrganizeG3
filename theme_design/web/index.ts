@@ -1,0 +1,1 @@
+export const ORGANIZEG3_THEME_NAME = "organizeg3-dark" as const;

@@ -1,0 +1,69 @@
+:root {
+    color-scheme: dark;
+
+    --og3-surface-page:
+        var(--og3-color-neutral-950);
+
+    --og3-surface-base:
+        var(--og3-color-neutral-925);
+
+    --og3-surface-raised:
+        var(--og3-color-neutral-900);
+
+    --og3-surface-overlay:
+        var(--og3-color-neutral-850);
+
+    --og3-surface-interactive:
+        var(--og3-color-neutral-800);
+
+    --og3-surface-interactive-hover:
+        var(--og3-color-neutral-700);
+
+    --og3-text-primary:
+        var(--og3-color-neutral-050);
+
+    --og3-text-secondary:
+        var(--og3-color-neutral-300);
+
+    --og3-text-muted:
+        var(--og3-color-neutral-400);
+
+    --og3-text-disabled:
+        var(--og3-color-neutral-500);
+
+    --og3-text-inverse:
+        var(--og3-color-neutral-950);
+
+    --og3-border-subtle:
+        var(--og3-color-neutral-850);
+
+    --og3-border-default:
+        var(--og3-color-neutral-700);
+
+    --og3-border-strong:
+        var(--og3-color-neutral-600);
+
+    --og3-accent-default:
+        var(--og3-color-blue-500);
+
+    --og3-accent-hover:
+        var(--og3-color-blue-400);
+
+    --og3-accent-pressed:
+        var(--og3-color-blue-600);
+
+    --og3-accent-foreground:
+        var(--og3-color-neutral-000);
+
+    --og3-status-success:
+        var(--og3-color-green-400);
+
+    --og3-status-warning:
+        var(--og3-color-yellow-400);
+
+    --og3-status-danger:
+        var(--og3-color-red-400);
+
+    --og3-focus-ring:
+        var(--og3-color-blue-300);
+}
