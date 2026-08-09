@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Annotated
+import uuid
 
 from fastapi import (
     APIRouter,
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.customer.schemas import (
     CustomerCreate,
     CustomerResponse,
@@ -27,6 +31,9 @@ from organizeg3_api.application.customer.use_cases import (
     ReactivateCustomerUseCase,
     UpdateCustomerUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.customer.entity import (
     CustomerType,
 )
@@ -37,6 +44,7 @@ from organizeg3_api.domain.identity.permissions import (
     CustomerPermissions,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -44,6 +52,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.customer_repository import (
     SQLAlchemyCustomerRepository,
@@ -111,6 +122,103 @@ ReactivateCustomerContext = Annotated[
 ]
 
 
+def _customer_snapshot(
+    customer: CustomerResponse,
+) -> dict[str, object]:
+    """Build the complete public auditable customer state."""
+
+    return {
+        "id": customer.id,
+        "tenant_id": customer.tenant_id,
+        "code": customer.code,
+        "name": customer.name,
+        "customer_type": customer.customer_type,
+        "document_number": customer.document_number,
+        "email": customer.email,
+        "phone": customer.phone,
+        "is_active": customer.is_active,
+        "row_version": customer.row_version,
+    }
+
+
+def _customer_business_state(
+    snapshot: dict[str, object],
+) -> dict[str, object]:
+    """Return customer state excluding concurrency metadata."""
+
+    return {
+        key: value
+        for key, value in snapshot.items()
+        if key != "row_version"
+    }
+
+
+def _load_customer_snapshot(
+    *,
+    repository: SQLAlchemyCustomerRepository,
+    tenant_id: uuid.UUID,
+    customer_id: int,
+    include_archived: bool = False,
+) -> dict[str, object] | None:
+    """Load one customer state before a mutation."""
+
+    customer = repository.get_by_id(
+        tenant_id,
+        customer_id,
+        include_archived=include_archived,
+    )
+
+    if customer is None:
+        return None
+
+    response = CustomerResponse.model_validate(
+        customer
+    )
+
+    return _customer_snapshot(
+        response
+    )
+
+
+def _record_customer_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    customer: CustomerResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one customer audit event in the current transaction."""
+
+    after = _customer_snapshot(
+        customer
+    )
+
+    if (
+        before is not None
+        and _customer_business_state(
+            before
+        )
+        == _customer_business_state(
+            after
+        )
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="customers",
+        resource_id=customer.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=CustomerResponse,
@@ -120,6 +228,7 @@ ReactivateCustomerContext = Annotated[
 def create_customer(
     payload: CustomerCreate,
     context: CreateCustomerContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -138,9 +247,18 @@ def create_customer(
         payload,
     )
 
-    return CustomerResponse.model_validate(
+    response = CustomerResponse.model_validate(
         customer
     )
+
+    _record_customer_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        customer=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -180,11 +298,16 @@ def list_customers(
     ] = None,
     limit: Annotated[
         int,
-        Query(ge=1, le=200),
+        Query(
+            ge=1,
+            le=200,
+        ),
     ] = 100,
     offset: Annotated[
         int,
-        Query(ge=0),
+        Query(
+            ge=0,
+        ),
     ] = 0,
 ) -> list[CustomerResponse]:
     """List customers from the authenticated tenant."""
@@ -254,6 +377,7 @@ def update_customer(
     customer_id: CustomerId,
     payload: CustomerUpdate,
     context: UpdateCustomerContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -265,6 +389,12 @@ def update_customer(
         session
     )
 
+    before = _load_customer_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        customer_id=customer_id,
+    )
+
     customer = UpdateCustomerUseCase(
         repository
     ).execute(
@@ -273,9 +403,19 @@ def update_customer(
         payload,
     )
 
-    return CustomerResponse.model_validate(
+    response = CustomerResponse.model_validate(
         customer
     )
+
+    _record_customer_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        customer=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -288,6 +428,7 @@ def archive_customer(
     customer_id: CustomerId,
     payload: CustomerVersionCommand,
     context: ArchiveCustomerContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -299,6 +440,13 @@ def archive_customer(
         session
     )
 
+    before = _load_customer_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        customer_id=customer_id,
+        include_archived=True,
+    )
+
     customer = ArchiveCustomerUseCase(
         repository
     ).execute(
@@ -307,9 +455,19 @@ def archive_customer(
         payload.row_version,
     )
 
-    return CustomerResponse.model_validate(
+    response = CustomerResponse.model_validate(
         customer
     )
+
+    _record_customer_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.ARCHIVE,
+        customer=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -322,6 +480,7 @@ def reactivate_customer(
     customer_id: CustomerId,
     payload: CustomerVersionCommand,
     context: ReactivateCustomerContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -333,6 +492,13 @@ def reactivate_customer(
         session
     )
 
+    before = _load_customer_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        customer_id=customer_id,
+        include_archived=True,
+    )
+
     customer = ReactivateCustomerUseCase(
         repository
     ).execute(
@@ -341,6 +507,16 @@ def reactivate_customer(
         payload.row_version,
     )
 
-    return CustomerResponse.model_validate(
+    response = CustomerResponse.model_validate(
         customer
     )
+
+    _record_customer_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        customer=response,
+        before=before,
+    )
+
+    return response

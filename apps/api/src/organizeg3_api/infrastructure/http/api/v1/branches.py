@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.branch.schemas import (
     BranchCreate,
     BranchResponse,
@@ -26,6 +30,9 @@ from organizeg3_api.application.branch.use_cases import (
     ReactivateBranchUseCase,
     UpdateBranchUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.identity.authentication import (
     AuthenticatedContext,
 )
@@ -33,6 +40,7 @@ from organizeg3_api.domain.identity.permissions import (
     BranchPermissions,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -40,6 +48,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.branch_repository import (
     SQLAlchemyBranchRepository,
@@ -100,6 +111,136 @@ ReactivateBranchContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime | None,
+) -> datetime | None:
+    """Normalize persisted timestamps to aware UTC for audit snapshots."""
+
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _branch_snapshot(
+    branch: BranchResponse,
+) -> dict[str, object]:
+    """Build the complete auditable public state of one branch."""
+
+    return {
+        "id": branch.id,
+        "tenant_id": branch.tenant_id,
+        "code": branch.code,
+        "name": branch.name,
+        "legal_name": branch.legal_name,
+        "document_number": branch.document_number,
+        "state_registration": branch.state_registration,
+        "email": branch.email,
+        "phone": branch.phone,
+        "website": branch.website,
+        "street": branch.street,
+        "number": branch.number,
+        "district": branch.district,
+        "city": branch.city,
+        "state": branch.state,
+        "postal_code": branch.postal_code,
+        "is_headquarters": branch.is_headquarters,
+        "is_active": branch.is_active,
+        "created_at": _audit_datetime(
+            branch.created_at
+        ),
+        "updated_at": _audit_datetime(
+            branch.updated_at
+        ),
+    }
+
+
+def _branch_business_state(
+    snapshot: dict[str, object],
+) -> dict[str, object]:
+    """Return branch state excluding persistence timestamps."""
+
+    return {
+        key: value
+        for key, value in snapshot.items()
+        if key not in {
+            "created_at",
+            "updated_at",
+        }
+    }
+
+
+def _load_branch_snapshot(
+    *,
+    repository: SQLAlchemyBranchRepository,
+    tenant_id: uuid.UUID,
+    branch_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load one branch state before a mutation."""
+
+    branch = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        branch_id=branch_id,
+    )
+
+    if branch is None:
+        return None
+
+    response = BranchResponse.model_validate(
+        branch
+    )
+
+    return _branch_snapshot(
+        response
+    )
+
+
+def _record_branch_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    branch: BranchResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one branch audit event in the current transaction."""
+
+    after = _branch_snapshot(
+        branch
+    )
+
+    if (
+        before is not None
+        and _branch_business_state(
+            before
+        )
+        == _branch_business_state(
+            after
+        )
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="branches",
+        resource_id=branch.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=BranchResponse,
@@ -109,6 +250,7 @@ ReactivateBranchContext = Annotated[
 def create_branch(
     payload: BranchCreate,
     context: CreateBranchContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -127,9 +269,18 @@ def create_branch(
         payload,
     )
 
-    return BranchResponse.model_validate(
+    response = BranchResponse.model_validate(
         branch
     )
+
+    _record_branch_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        branch=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -241,6 +392,7 @@ def update_branch(
     branch_id: uuid.UUID,
     payload: BranchUpdate,
     context: UpdateBranchContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -252,6 +404,12 @@ def update_branch(
         session
     )
 
+    before = _load_branch_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        branch_id=branch_id,
+    )
+
     branch = UpdateBranchUseCase(
         repository
     ).execute(
@@ -260,9 +418,19 @@ def update_branch(
         payload,
     )
 
-    return BranchResponse.model_validate(
+    response = BranchResponse.model_validate(
         branch
     )
+
+    _record_branch_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        branch=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -274,6 +442,7 @@ def update_branch(
 def deactivate_branch(
     branch_id: uuid.UUID,
     context: DeactivateBranchContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -285,6 +454,12 @@ def deactivate_branch(
         session
     )
 
+    before = _load_branch_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        branch_id=branch_id,
+    )
+
     branch = DeactivateBranchUseCase(
         repository
     ).execute(
@@ -292,9 +467,19 @@ def deactivate_branch(
         branch_id,
     )
 
-    return BranchResponse.model_validate(
+    response = BranchResponse.model_validate(
         branch
     )
+
+    _record_branch_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        branch=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -306,6 +491,7 @@ def deactivate_branch(
 def reactivate_branch(
     branch_id: uuid.UUID,
     context: ReactivateBranchContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -317,6 +503,12 @@ def reactivate_branch(
         session
     )
 
+    before = _load_branch_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        branch_id=branch_id,
+    )
+
     branch = ReactivateBranchUseCase(
         repository
     ).execute(
@@ -324,6 +516,16 @@ def reactivate_branch(
         branch_id,
     )
 
-    return BranchResponse.model_validate(
+    response = BranchResponse.model_validate(
         branch
     )
+
+    _record_branch_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        branch=response,
+        before=before,
+    )
+
+    return response

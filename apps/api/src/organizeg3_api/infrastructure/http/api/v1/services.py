@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.service.schemas import (
     ServiceCreate,
     ServiceResponse,
@@ -26,6 +30,9 @@ from organizeg3_api.application.service.use_cases import (
     ReactivateServiceUseCase,
     UpdateServiceUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.identity.authentication import (
     AuthenticatedContext,
 )
@@ -36,6 +43,7 @@ from organizeg3_api.domain.service.value_objects import (
     ServiceExecutionMode,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -43,6 +51,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.service_repository import (
     SQLAlchemyServiceRepository,
@@ -103,6 +114,106 @@ ReactivateServiceContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime,
+) -> datetime:
+    """Normalize persistence timestamps to aware UTC for auditing."""
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _service_snapshot(
+    service: ServiceResponse,
+) -> dict[str, object]:
+    """Build the complete auditable state of one service."""
+
+    return {
+        "id": service.id,
+        "tenant_id": service.tenant_id,
+        "code": service.code,
+        "name": service.name,
+        "category": service.category,
+        "unit": service.unit,
+        "execution_mode": service.execution_mode,
+        "estimated_duration_minutes": (
+            service.estimated_duration_minutes
+        ),
+        "is_active": service.is_active,
+        "created_at": _audit_datetime(
+            service.created_at
+        ),
+        "updated_at": _audit_datetime(
+            service.updated_at
+        ),
+    }
+
+
+def _load_service_snapshot(
+    *,
+    repository: SQLAlchemyServiceRepository,
+    tenant_id: uuid.UUID,
+    service_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load one service state before a mutation."""
+
+    service = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        service_id=service_id,
+    )
+
+    if service is None:
+        return None
+
+    response = ServiceResponse.model_validate(
+        service
+    )
+
+    return _service_snapshot(
+        response
+    )
+
+
+def _record_service_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    service: ServiceResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one service event using the current transaction."""
+
+    after = _service_snapshot(
+        service
+    )
+
+    if (
+        before is not None
+        and before == after
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="services",
+        resource_id=service.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=ServiceResponse,
@@ -112,6 +223,7 @@ ReactivateServiceContext = Annotated[
 def create_service(
     payload: ServiceCreate,
     context: CreateServiceContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -130,9 +242,18 @@ def create_service(
         data=payload,
     )
 
-    return ServiceResponse.model_validate(
+    response = ServiceResponse.model_validate(
         service
     )
+
+    _record_service_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        service=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -262,6 +383,7 @@ def update_service(
     service_id: uuid.UUID,
     payload: ServiceUpdate,
     context: UpdateServiceContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -273,6 +395,12 @@ def update_service(
         session
     )
 
+    before = _load_service_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        service_id=service_id,
+    )
+
     service = UpdateServiceUseCase(
         repository
     ).execute(
@@ -281,9 +409,19 @@ def update_service(
         data=payload,
     )
 
-    return ServiceResponse.model_validate(
+    response = ServiceResponse.model_validate(
         service
     )
+
+    _record_service_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        service=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -295,6 +433,7 @@ def update_service(
 def deactivate_service(
     service_id: uuid.UUID,
     context: DeactivateServiceContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -306,6 +445,12 @@ def deactivate_service(
         session
     )
 
+    before = _load_service_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        service_id=service_id,
+    )
+
     service = DeactivateServiceUseCase(
         repository
     ).execute(
@@ -313,9 +458,19 @@ def deactivate_service(
         service_id=service_id,
     )
 
-    return ServiceResponse.model_validate(
+    response = ServiceResponse.model_validate(
         service
     )
+
+    _record_service_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        service=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -327,6 +482,7 @@ def deactivate_service(
 def reactivate_service(
     service_id: uuid.UUID,
     context: ReactivateServiceContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -338,6 +494,12 @@ def reactivate_service(
         session
     )
 
+    before = _load_service_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        service_id=service_id,
+    )
+
     service = ReactivateServiceUseCase(
         repository
     ).execute(
@@ -345,9 +507,19 @@ def reactivate_service(
         service_id=service_id,
     )
 
-    return ServiceResponse.model_validate(
+    response = ServiceResponse.model_validate(
         service
     )
+
+    _record_service_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        service=response,
+        before=before,
+    )
+
+    return response
 
 
 __all__ = [

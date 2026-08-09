@@ -1,5 +1,8 @@
 """SQLAlchemy persistence models registered in shared metadata."""
 
+from organizeg3_api.infrastructure.persistence.models.audit_event import (
+    AuditEventModel,
+)
 from organizeg3_api.infrastructure.persistence.models.authorization import (
     AccessProfileModel,
     AccessProfilePermissionModel,
@@ -83,6 +86,7 @@ TenantModel = TenantRecordModel
 __all__ = [
     "AccessProfileModel",
     "AccessProfilePermissionModel",
+    "AuditEventModel",
     "BranchModel",
     "BrandModel",
     "CompanyModel",

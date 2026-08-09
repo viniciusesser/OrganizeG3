@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.brand.schemas import (
     BrandCreate,
     BrandResponse,
@@ -26,6 +30,9 @@ from organizeg3_api.application.brand.use_cases import (
     ReactivateBrand,
     UpdateBrand,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.identity.authentication import (
     AuthenticatedContext,
 )
@@ -33,6 +40,7 @@ from organizeg3_api.domain.identity.permissions import (
     BrandPermissions,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -40,6 +48,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.brand_repository import (
     SQLAlchemyBrandRepository,
@@ -100,6 +111,101 @@ ReactivateBrandContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime | None,
+) -> datetime | None:
+    """Normalize persistence timestamps to aware UTC for auditing."""
+
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _brand_snapshot(
+    brand: BrandResponse,
+) -> dict[str, object]:
+    """Build the complete business snapshot of one brand."""
+
+    return {
+        "id": brand.id,
+        "tenant_id": brand.tenant_id,
+        "code": brand.code,
+        "name": brand.name,
+        "is_active": brand.is_active,
+        "created_at": _audit_datetime(
+            brand.created_at
+        ),
+        "updated_at": _audit_datetime(
+            brand.updated_at
+        ),
+    }
+
+
+def _record_brand_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    brand: BrandResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one brand event using the current transaction."""
+
+    after = _brand_snapshot(
+        brand
+    )
+
+    if (
+        before is not None
+        and before == after
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="brands",
+        resource_id=brand.id,
+        before=before,
+        after=after,
+    )
+
+
+def _load_brand_snapshot(
+    *,
+    repository: SQLAlchemyBrandRepository,
+    tenant_id: uuid.UUID,
+    brand_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load the current state before one mutation."""
+
+    brand = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        brand_id=brand_id,
+    )
+
+    if brand is None:
+        return None
+
+    return _brand_snapshot(
+        BrandResponse.from_entity(
+            brand
+        )
+    )
+
+
 @router.post(
     "",
     response_model=BrandResponse,
@@ -109,6 +215,7 @@ ReactivateBrandContext = Annotated[
 def create_brand(
     payload: BrandCreate,
     context: CreateBrandContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -120,12 +227,21 @@ def create_brand(
         session
     )
 
-    return CreateBrand(
+    result = CreateBrand(
         repository
     ).execute(
         tenant_id=context.tenant_id,
         data=payload,
     )
+
+    _record_brand_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        brand=result,
+    )
+
+    return result
 
 
 @router.get(
@@ -226,6 +342,7 @@ def update_brand(
     brand_id: uuid.UUID,
     payload: BrandUpdate,
     context: UpdateBrandContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -237,13 +354,29 @@ def update_brand(
         session
     )
 
-    return UpdateBrand(
+    before = _load_brand_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        brand_id=brand_id,
+    )
+
+    result = UpdateBrand(
         repository
     ).execute(
         tenant_id=context.tenant_id,
         brand_id=brand_id,
         data=payload,
     )
+
+    _record_brand_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        brand=result,
+        before=before,
+    )
+
+    return result
 
 
 @router.post(
@@ -255,6 +388,7 @@ def update_brand(
 def deactivate_brand(
     brand_id: uuid.UUID,
     context: DeactivateBrandContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -266,12 +400,28 @@ def deactivate_brand(
         session
     )
 
-    return DeactivateBrand(
+    before = _load_brand_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        brand_id=brand_id,
+    )
+
+    result = DeactivateBrand(
         repository
     ).execute(
         tenant_id=context.tenant_id,
         brand_id=brand_id,
     )
+
+    _record_brand_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        brand=result,
+        before=before,
+    )
+
+    return result
 
 
 @router.post(
@@ -283,6 +433,7 @@ def deactivate_brand(
 def reactivate_brand(
     brand_id: uuid.UUID,
     context: ReactivateBrandContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -294,12 +445,28 @@ def reactivate_brand(
         session
     )
 
-    return ReactivateBrand(
+    before = _load_brand_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        brand_id=brand_id,
+    )
+
+    result = ReactivateBrand(
         repository
     ).execute(
         tenant_id=context.tenant_id,
         brand_id=brand_id,
     )
+
+    _record_brand_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        brand=result,
+        before=before,
+    )
+
+    return result
 
 
 __all__ = [

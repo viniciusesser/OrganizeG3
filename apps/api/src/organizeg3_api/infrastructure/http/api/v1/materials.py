@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.material.schemas import (
     MaterialCreate,
     MaterialResponse,
@@ -26,6 +30,9 @@ from organizeg3_api.application.material.use_cases import (
     ReactivateMaterialUseCase,
     UpdateMaterialUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.identity.authentication import (
     AuthenticatedContext,
 )
@@ -33,6 +40,7 @@ from organizeg3_api.domain.identity.permissions import (
     MaterialPermissions,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -40,6 +48,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.material_repository import (
     SQLAlchemyMaterialRepository,
@@ -100,6 +111,123 @@ ReactivateMaterialContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime,
+) -> datetime:
+    """Normalize persistence timestamps to aware UTC for auditing."""
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _material_snapshot(
+    material: MaterialResponse,
+) -> dict[str, object]:
+    """Build the complete auditable state of one material."""
+
+    return {
+        "id": material.id,
+        "tenant_id": material.tenant_id,
+        "code": material.code,
+        "name": material.name,
+        "category": material.category,
+        "unit": material.unit,
+        "brand_id": material.brand_id,
+        "is_active": material.is_active,
+        "created_at": _audit_datetime(
+            material.created_at
+        ),
+        "updated_at": _audit_datetime(
+            material.updated_at
+        ),
+    }
+
+
+def _material_business_state(
+    snapshot: dict[str, object],
+) -> dict[str, object]:
+    """Return fields that represent the material's business state."""
+
+    return {
+        key: value
+        for key, value in snapshot.items()
+        if key not in {
+            "created_at",
+            "updated_at",
+        }
+    }
+
+
+def _load_material_snapshot(
+    *,
+    repository: SQLAlchemyMaterialRepository,
+    tenant_id: uuid.UUID,
+    material_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load one material state before a mutation."""
+
+    material = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        material_id=material_id,
+    )
+
+    if material is None:
+        return None
+
+    response = MaterialResponse.model_validate(
+        material
+    )
+
+    return _material_snapshot(
+        response
+    )
+
+
+def _record_material_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    material: MaterialResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one material event using the current transaction."""
+
+    after = _material_snapshot(
+        material
+    )
+
+    if (
+        before is not None
+        and _material_business_state(
+            before
+        )
+        == _material_business_state(
+            after
+        )
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="materials",
+        resource_id=material.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=MaterialResponse,
@@ -109,6 +237,7 @@ ReactivateMaterialContext = Annotated[
 def create_material(
     payload: MaterialCreate,
     context: CreateMaterialContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -127,9 +256,18 @@ def create_material(
         payload,
     )
 
-    return MaterialResponse.model_validate(
+    response = MaterialResponse.model_validate(
         material
     )
+
+    _record_material_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        material=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -257,6 +395,7 @@ def update_material(
     material_id: uuid.UUID,
     payload: MaterialUpdate,
     context: UpdateMaterialContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -268,6 +407,12 @@ def update_material(
         session
     )
 
+    before = _load_material_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        material_id=material_id,
+    )
+
     material = UpdateMaterialUseCase(
         repository
     ).execute(
@@ -276,9 +421,19 @@ def update_material(
         payload,
     )
 
-    return MaterialResponse.model_validate(
+    response = MaterialResponse.model_validate(
         material
     )
+
+    _record_material_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        material=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -290,6 +445,7 @@ def update_material(
 def deactivate_material(
     material_id: uuid.UUID,
     context: DeactivateMaterialContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -301,6 +457,12 @@ def deactivate_material(
         session
     )
 
+    before = _load_material_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        material_id=material_id,
+    )
+
     material = DeactivateMaterialUseCase(
         repository
     ).execute(
@@ -308,9 +470,19 @@ def deactivate_material(
         material_id,
     )
 
-    return MaterialResponse.model_validate(
+    response = MaterialResponse.model_validate(
         material
     )
+
+    _record_material_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        material=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -322,6 +494,7 @@ def deactivate_material(
 def reactivate_material(
     material_id: uuid.UUID,
     context: ReactivateMaterialContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -333,6 +506,12 @@ def reactivate_material(
         session
     )
 
+    before = _load_material_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        material_id=material_id,
+    )
+
     material = ReactivateMaterialUseCase(
         repository
     ).execute(
@@ -340,9 +519,19 @@ def reactivate_material(
         material_id,
     )
 
-    return MaterialResponse.model_validate(
+    response = MaterialResponse.model_validate(
         material
     )
+
+    _record_material_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        material=response,
+        before=before,
+    )
+
+    return response
 
 
 __all__ = [

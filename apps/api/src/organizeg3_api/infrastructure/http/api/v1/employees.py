@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.employee import (
     CreateEmployeeUseCase,
     DeactivateEmployeeUseCase,
@@ -24,6 +28,9 @@ from organizeg3_api.application.employee import (
     ReactivateEmployeeUseCase,
     UpdateEmployeeUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.employee import (
     EmploymentStatus,
 )
@@ -34,6 +41,7 @@ from organizeg3_api.domain.identity.permissions import (
     EmployeePermissions,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -41,6 +49,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.employee_repository import (
     SQLAlchemyEmployeeRepository,
@@ -103,6 +114,133 @@ ReactivateEmployeeContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime | None,
+) -> datetime | None:
+    """Normalize persisted timestamps to aware UTC for audit snapshots."""
+
+    if value is None:
+        return None
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _employee_snapshot(
+    employee: EmployeeResponse,
+) -> dict[str, object]:
+    """Build the complete auditable state of one employee."""
+
+    return {
+        "id": employee.id,
+        "tenant_id": employee.tenant_id,
+        "branch_id": employee.branch_id,
+        "code": employee.code,
+        "full_name": employee.full_name,
+        "document_number": employee.document_number,
+        "email": employee.email,
+        "phone": employee.phone,
+        "job_title": employee.job_title,
+        "contract_type": employee.contract_type,
+        "status": employee.status,
+        "birth_date": employee.birth_date,
+        "admission_date": employee.admission_date,
+        "termination_date": employee.termination_date,
+        "is_active": employee.is_active,
+        "created_at": _audit_datetime(
+            employee.created_at
+        ),
+        "updated_at": _audit_datetime(
+            employee.updated_at
+        ),
+    }
+
+
+def _employee_business_state(
+    snapshot: dict[str, object],
+) -> dict[str, object]:
+    """Return only fields representing employee business state."""
+
+    return {
+        key: value
+        for key, value in snapshot.items()
+        if key not in {
+            "created_at",
+            "updated_at",
+        }
+    }
+
+
+def _load_employee_snapshot(
+    *,
+    repository: SQLAlchemyEmployeeRepository,
+    tenant_id: uuid.UUID,
+    employee_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load one employee state before a mutation."""
+
+    employee = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        employee_id=employee_id,
+    )
+
+    if employee is None:
+        return None
+
+    response = EmployeeResponse.model_validate(
+        employee
+    )
+
+    return _employee_snapshot(
+        response
+    )
+
+
+def _record_employee_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    employee: EmployeeResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one employee audit event in the current transaction."""
+
+    after = _employee_snapshot(
+        employee
+    )
+
+    if (
+        before is not None
+        and _employee_business_state(
+            before
+        )
+        == _employee_business_state(
+            after
+        )
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="employees",
+        resource_id=employee.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=EmployeeResponse,
@@ -112,6 +250,7 @@ ReactivateEmployeeContext = Annotated[
 def create_employee(
     payload: EmployeeCreate,
     context: CreateEmployeeContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(
@@ -132,9 +271,18 @@ def create_employee(
         payload,
     )
 
-    return EmployeeResponse.model_validate(
+    response = EmployeeResponse.model_validate(
         employee
     )
+
+    _record_employee_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        employee=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -253,6 +401,7 @@ def update_employee(
     employee_id: uuid.UUID,
     payload: EmployeeUpdate,
     context: UpdateEmployeeContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(
@@ -266,6 +415,12 @@ def update_employee(
         session
     )
 
+    before = _load_employee_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        employee_id=employee_id,
+    )
+
     employee = UpdateEmployeeUseCase(
         repository
     ).execute(
@@ -274,9 +429,19 @@ def update_employee(
         payload,
     )
 
-    return EmployeeResponse.model_validate(
+    response = EmployeeResponse.model_validate(
         employee
     )
+
+    _record_employee_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        employee=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -288,6 +453,7 @@ def update_employee(
 def deactivate_employee(
     employee_id: uuid.UUID,
     context: DeactivateEmployeeContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(
@@ -301,6 +467,12 @@ def deactivate_employee(
         session
     )
 
+    before = _load_employee_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        employee_id=employee_id,
+    )
+
     employee = DeactivateEmployeeUseCase(
         repository
     ).execute(
@@ -308,9 +480,19 @@ def deactivate_employee(
         employee_id,
     )
 
-    return EmployeeResponse.model_validate(
+    response = EmployeeResponse.model_validate(
         employee
     )
+
+    _record_employee_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        employee=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -322,6 +504,7 @@ def deactivate_employee(
 def reactivate_employee(
     employee_id: uuid.UUID,
     context: ReactivateEmployeeContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(
@@ -335,6 +518,12 @@ def reactivate_employee(
         session
     )
 
+    before = _load_employee_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        employee_id=employee_id,
+    )
+
     employee = ReactivateEmployeeUseCase(
         repository
     ).execute(
@@ -342,6 +531,16 @@ def reactivate_employee(
         employee_id,
     )
 
-    return EmployeeResponse.model_validate(
+    response = EmployeeResponse.model_validate(
         employee
     )
+
+    _record_employee_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        employee=response,
+        before=before,
+    )
+
+    return response

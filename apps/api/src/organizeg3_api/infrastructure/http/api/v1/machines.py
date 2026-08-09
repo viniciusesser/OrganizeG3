@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Annotated
 import uuid
 
@@ -13,6 +14,9 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from organizeg3_api.application.audit import (
+    RecordAuditEvent,
+)
 from organizeg3_api.application.machine.schemas import (
     MachineCreate,
     MachineResponse,
@@ -28,6 +32,9 @@ from organizeg3_api.application.machine.use_cases import (
     ReactivateMachineUseCase,
     UpdateMachineUseCase,
 )
+from organizeg3_api.domain.audit import (
+    AuditAction,
+)
 from organizeg3_api.domain.identity.authentication import (
     AuthenticatedContext,
 )
@@ -38,6 +45,7 @@ from organizeg3_api.domain.machine.value_objects import (
     MachineStatus,
 )
 from organizeg3_api.infrastructure.http.audit_context import (
+    AuditRequestContext,
     get_audit_context,
 )
 from organizeg3_api.infrastructure.http.authentication import (
@@ -45,6 +53,9 @@ from organizeg3_api.infrastructure.http.authentication import (
 )
 from organizeg3_api.infrastructure.http.dependencies import (
     get_db_session,
+)
+from organizeg3_api.infrastructure.persistence.repositories.audit_event_repository import (
+    SQLAlchemyAuditEventRepository,
 )
 from organizeg3_api.infrastructure.persistence.repositories.machine_repository import (
     SQLAlchemyMachineRepository,
@@ -114,6 +125,106 @@ ReactivateMachineContext = Annotated[
 ]
 
 
+def _audit_datetime(
+    value: datetime,
+) -> datetime:
+    """Normalize persistence timestamps to aware UTC for auditing."""
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=UTC
+        )
+
+    return value.astimezone(
+        UTC
+    )
+
+
+def _machine_snapshot(
+    machine: MachineResponse,
+) -> dict[str, object]:
+    """Build the complete auditable state of one machine."""
+
+    return {
+        "id": machine.id,
+        "tenant_id": machine.tenant_id,
+        "code": machine.code,
+        "name": machine.name,
+        "machine_type": machine.machine_type,
+        "status": machine.status,
+        "branch_id": machine.branch_id,
+        "manufacturer": machine.manufacturer,
+        "model": machine.model,
+        "serial_number": machine.serial_number,
+        "is_active": machine.is_active,
+        "created_at": _audit_datetime(
+            machine.created_at
+        ),
+        "updated_at": _audit_datetime(
+            machine.updated_at
+        ),
+    }
+
+
+def _load_machine_snapshot(
+    *,
+    repository: SQLAlchemyMachineRepository,
+    tenant_id: uuid.UUID,
+    machine_id: uuid.UUID,
+) -> dict[str, object] | None:
+    """Load one machine state before a mutation."""
+
+    machine = repository.get_by_id_for_tenant(
+        tenant_id=tenant_id,
+        machine_id=machine_id,
+    )
+
+    if machine is None:
+        return None
+
+    response = MachineResponse.model_validate(
+        machine
+    )
+
+    return _machine_snapshot(
+        response
+    )
+
+
+def _record_machine_event(
+    *,
+    session: Session,
+    audit_context: AuditRequestContext,
+    action: AuditAction,
+    machine: MachineResponse,
+    before: dict[str, object] | None = None,
+) -> None:
+    """Append one machine event using the current transaction."""
+
+    after = _machine_snapshot(
+        machine
+    )
+
+    if (
+        before is not None
+        and before == after
+    ):
+        return
+
+    RecordAuditEvent(
+        SQLAlchemyAuditEventRepository(
+            session
+        )
+    ).execute(
+        context=audit_context,
+        action=action,
+        resource="machines",
+        resource_id=machine.id,
+        before=before,
+        after=after,
+    )
+
+
 @router.post(
     "",
     response_model=MachineResponse,
@@ -123,6 +234,7 @@ ReactivateMachineContext = Annotated[
 def create_machine(
     payload: MachineCreate,
     context: CreateMachineContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -141,9 +253,18 @@ def create_machine(
         data=payload,
     )
 
-    return MachineResponse.model_validate(
+    response = MachineResponse.model_validate(
         machine
     )
+
+    _record_machine_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.CREATE,
+        machine=response,
+    )
+
+    return response
 
 
 @router.get(
@@ -279,6 +400,7 @@ def update_machine(
     machine_id: uuid.UUID,
     payload: MachineUpdate,
     context: UpdateMachineContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -290,6 +412,12 @@ def update_machine(
         session
     )
 
+    before = _load_machine_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        machine_id=machine_id,
+    )
+
     machine = UpdateMachineUseCase(
         repository
     ).execute(
@@ -298,9 +426,19 @@ def update_machine(
         data=payload,
     )
 
-    return MachineResponse.model_validate(
+    response = MachineResponse.model_validate(
         machine
     )
+
+    _record_machine_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.UPDATE,
+        machine=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -313,6 +451,7 @@ def change_machine_status(
     machine_id: uuid.UUID,
     payload: MachineStatusUpdate,
     context: ChangeMachineStatusContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -324,6 +463,12 @@ def change_machine_status(
         session
     )
 
+    before = _load_machine_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        machine_id=machine_id,
+    )
+
     machine = ChangeMachineStatusUseCase(
         repository
     ).execute(
@@ -332,9 +477,19 @@ def change_machine_status(
         status=payload.status,
     )
 
-    return MachineResponse.model_validate(
+    response = MachineResponse.model_validate(
         machine
     )
+
+    _record_machine_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.STATUS_CHANGE,
+        machine=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -346,6 +501,7 @@ def change_machine_status(
 def deactivate_machine(
     machine_id: uuid.UUID,
     context: DeactivateMachineContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -357,6 +513,12 @@ def deactivate_machine(
         session
     )
 
+    before = _load_machine_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        machine_id=machine_id,
+    )
+
     machine = DeactivateMachineUseCase(
         repository
     ).execute(
@@ -364,9 +526,19 @@ def deactivate_machine(
         machine_id=machine_id,
     )
 
-    return MachineResponse.model_validate(
+    response = MachineResponse.model_validate(
         machine
     )
+
+    _record_machine_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.DEACTIVATE,
+        machine=response,
+        before=before,
+    )
+
+    return response
 
 
 @router.post(
@@ -378,6 +550,7 @@ def deactivate_machine(
 def reactivate_machine(
     machine_id: uuid.UUID,
     context: ReactivateMachineContext,
+    audit_context: AuditRequestContext,
     session: Annotated[
         Session,
         Depends(get_db_session),
@@ -389,6 +562,12 @@ def reactivate_machine(
         session
     )
 
+    before = _load_machine_snapshot(
+        repository=repository,
+        tenant_id=context.tenant_id,
+        machine_id=machine_id,
+    )
+
     machine = ReactivateMachineUseCase(
         repository
     ).execute(
@@ -396,9 +575,19 @@ def reactivate_machine(
         machine_id=machine_id,
     )
 
-    return MachineResponse.model_validate(
+    response = MachineResponse.model_validate(
         machine
     )
+
+    _record_machine_event(
+        session=session,
+        audit_context=audit_context,
+        action=AuditAction.REACTIVATE,
+        machine=response,
+        before=before,
+    )
+
+    return response
 
 
 __all__ = [
