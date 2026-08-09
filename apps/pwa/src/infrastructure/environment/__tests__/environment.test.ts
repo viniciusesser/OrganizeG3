@@ -23,6 +23,8 @@ describe(
 
                 expect(result).toEqual({
                     apiBaseUrl: "/api",
+                    supabaseUrl: null,
+                    supabaseAnonKey: null,
                     isDevelopment: true,
                     isProduction: false,
                     mode: "development",
@@ -53,16 +55,16 @@ describe(
                 const result =
                     createApplicationEnvironment({
                         apiBaseUrl:
-                            "https://api.example.com///",
-                        isDevelopment: false,
-                        isProduction: true,
-                        mode: "production",
+                            "http://localhost:8000///",
+                        isDevelopment: true,
+                        isProduction: false,
+                        mode: "development",
                     });
 
                 expect(
                     result.apiBaseUrl,
                 ).toBe(
-                    "https://api.example.com",
+                    "http://localhost:8000",
                 );
             },
         );
@@ -72,9 +74,10 @@ describe(
             () => {
                 const result =
                     createApplicationEnvironment({
-                        isDevelopment: false,
-                        isProduction: true,
-                        mode: "production",
+                        apiBaseUrl: "/api",
+                        isDevelopment: true,
+                        isProduction: false,
+                        mode: "development",
                     });
 
                 expect(

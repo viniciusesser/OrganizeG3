@@ -1,14 +1,24 @@
 import {
+    useContext,
+} from "react";
+import {
     NavLink,
 } from "react-router";
 
 import {
+    filterNavigationGroups,
     navigationGroups,
 } from "@/app/navigation/navigation";
+import {
+    AuthContext,
+} from "@/features/auth/session/AuthContext";
 
 export interface NavigationContentProps {
     readonly onNavigate?: () => void;
 }
+
+const EMPTY_PERMISSIONS =
+    new Set<string>();
 
 function getNavigationLinkClassName({
     isActive,
@@ -28,35 +38,63 @@ function getNavigationLinkClassName({
 export function NavigationContent({
     onNavigate,
 }: NavigationContentProps) {
+    const auth =
+        useContext(
+            AuthContext,
+        );
+
+    const visibleGroups =
+        auth === null
+            ? navigationGroups
+            : filterNavigationGroups(
+                navigationGroups,
+                auth.status ===
+                    "authenticated"
+                    ? (
+                        auth.identity
+                            ?.permissions ??
+                        EMPTY_PERMISSIONS
+                    )
+                    : EMPTY_PERMISSIONS,
+            );
+
     return (
         <>
-            {navigationGroups.map(
+            {visibleGroups.map(
                 (group) => (
                     <section
                         className="og3-navigation__group"
                         key={group.id}
                     >
-                        <p
-                            className="og3-navigation__group-label"
-                        >
+                        <div className="og3-navigation__group-label">
                             {group.label}
-                        </p>
+                        </div>
 
-                        <ul
-                            className="og3-navigation__list"
-                        >
+                        <ul className="og3-navigation__list">
                             {group.items.map(
                                 (item) => (
-                                    <li key={item.id}>
+                                    <li
+                                        key={
+                                            item.id
+                                        }
+                                    >
                                         <NavLink
                                             className={
                                                 getNavigationLinkClassName
                                             }
-                                            end={item.end}
-                                            onClick={onNavigate}
-                                            to={item.path}
+                                            end={
+                                                item.end
+                                            }
+                                            onClick={
+                                                onNavigate
+                                            }
+                                            to={
+                                                item.path
+                                            }
                                         >
-                                            {item.label}
+                                            {
+                                                item.label
+                                            }
                                         </NavLink>
                                     </li>
                                 ),

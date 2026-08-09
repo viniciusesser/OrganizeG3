@@ -17,4 +17,5 @@
 @import "./components/navigation.css";
 @import "./components/app-shell.css";
 @import "./components/mobile-navigation.css";
+@import "./components/auth.css";
 @import "./components/theme-preview.css";

@@ -6,17 +6,22 @@ import {
     createCorrelationId,
     getCorrelationIdHeaderName,
 } from "@/infrastructure/api/correlationId";
-import { environment } from "@/infrastructure/environment/environment";
+import {
+    environment,
+} from "@/infrastructure/environment/environment";
 
 export interface ApiRequestOptions
     extends Omit<RequestInit, "body"> {
     readonly body?: unknown;
 }
 
-function buildUrl(path: string): string {
-    const normalizedPath = path.startsWith("/")
-        ? path
-        : `/${path}`;
+function buildUrl(
+    path: string,
+): string {
+    const normalizedPath =
+        path.startsWith("/")
+            ? path
+            : `/${path}`;
 
     return `${environment.apiBaseUrl}${normalizedPath}`;
 }
@@ -24,13 +29,21 @@ function buildUrl(path: string): string {
 function buildHeaders(
     headers?: HeadersInit,
 ): Headers {
-    const result = new Headers(headers);
+    const result =
+        new Headers(headers);
 
     if (!result.has("Accept")) {
-        result.set("Accept", "application/json");
+        result.set(
+            "Accept",
+            "application/json",
+        );
     }
 
-    if (!result.has(getCorrelationIdHeaderName())) {
+    if (
+        !result.has(
+            getCorrelationIdHeaderName(),
+        )
+    ) {
         result.set(
             getCorrelationIdHeaderName(),
             createCorrelationId(),
@@ -75,13 +88,20 @@ async function readResponseBody(
     }
 
     const contentType =
-        response.headers.get("content-type") ?? "";
+        response.headers.get(
+            "content-type",
+        ) ?? "";
 
-    if (contentType.includes("application/json")) {
+    if (
+        contentType.includes(
+            "application/json",
+        )
+    ) {
         return response.json();
     }
 
-    const text = await response.text();
+    const text =
+        await response.text();
 
     return text.length > 0
         ? text
@@ -97,13 +117,16 @@ function getResponseCorrelationId(
             getCorrelationIdHeaderName(),
         );
 
-    if (headerCorrelationId !== null) {
+    if (
+        headerCorrelationId !== null
+    ) {
         return headerCorrelationId;
     }
 
     if (
         isApiErrorEnvelope(body) &&
-        typeof body.meta?.correlation_id === "string"
+        typeof body.meta
+            ?.correlation_id === "string"
     ) {
         return body.meta.correlation_id;
     }
@@ -134,24 +157,29 @@ function createApiError(
     return new ApiError({
         status: response.status,
         code: "unexpected_api_error",
-        message: `A API respondeu com HTTP ${response.status}.`,
+        message:
+            `A API respondeu com HTTP ${response.status}.`,
         details: body,
         correlationId,
     });
 }
 
-export async function apiRequest<TResponse>(
+export async function apiRequest<
+    TResponse,
+>(
     path: string,
     options: ApiRequestOptions = {},
 ): Promise<TResponse> {
-    const headers = buildHeaders(
-        options.headers,
-    );
+    const headers =
+        buildHeaders(
+            options.headers,
+        );
 
-    const body = serializeBody(
-        options.body,
-        headers,
-    );
+    const body =
+        serializeBody(
+            options.body,
+            headers,
+        );
 
     let response: Response;
 
@@ -178,7 +206,9 @@ export async function apiRequest<TResponse>(
     }
 
     const responseBody =
-        await readResponseBody(response);
+        await readResponseBody(
+            response,
+        );
 
     if (!response.ok) {
         throw createApiError(

@@ -1,4 +1,4 @@
-"""SQLAlchemy repository for local identity authorization."""
+﻿"""SQLAlchemy repository for local identity authorization."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from organizeg3_api.domain.identity.enums import (
     PermissionEffect,
 )
 from organizeg3_api.domain.identity.repository import (
+    AccessibleTenant,
     IdentityAccess,
     IdentityRepository,
 )
@@ -23,6 +24,9 @@ from organizeg3_api.infrastructure.persistence.models.authorization import (
     TenantMembershipPermissionOverrideModel,
     TenantMembershipProfileModel,
 )
+from organizeg3_api.infrastructure.persistence.models.tenant import (
+    TenantRecordModel,
+)
 from organizeg3_api.infrastructure.persistence.models.user import (
     TenantMembershipModel,
     UserModel,
@@ -30,7 +34,7 @@ from organizeg3_api.infrastructure.persistence.models.user import (
 
 
 class SqlAlchemyIdentityRepository(
-    IdentityRepository
+    IdentityRepository,
 ):
     """Resolve local identity and effective permissions."""
 
@@ -39,6 +43,79 @@ class SqlAlchemyIdentityRepository(
         session: Session,
     ) -> None:
         self._session = session
+
+    def list_accessible_tenants(
+        self,
+        *,
+        auth_user_id: uuid.UUID,
+    ) -> tuple[AccessibleTenant, ...]:
+        """List active tenant memberships for one authenticated user."""
+
+        statement = (
+            select(
+                TenantRecordModel.id.label(
+                    "tenant_id"
+                ),
+                TenantRecordModel.name.label(
+                    "tenant_name"
+                ),
+                TenantMembershipModel.id.label(
+                    "membership_id"
+                ),
+            )
+            .select_from(UserModel)
+            .join(
+                TenantMembershipModel,
+                TenantMembershipModel.user_id
+                == UserModel.id,
+            )
+            .join(
+                TenantRecordModel,
+                TenantRecordModel.id
+                == TenantMembershipModel.tenant_id,
+            )
+            .where(
+                UserModel.auth_user_id
+                == auth_user_id,
+                UserModel.is_active.is_(
+                    True
+                ),
+                UserModel.deleted_at.is_(
+                    None
+                ),
+                TenantMembershipModel.status
+                == MembershipStatus.ACTIVE.value,
+                TenantRecordModel.is_active.is_(
+                    True
+                ),
+            )
+            .order_by(
+                TenantRecordModel.name.asc(),
+                TenantRecordModel.id.asc(),
+            )
+        )
+
+        rows = self._session.execute(
+            statement
+        ).all()
+
+        return tuple(
+            AccessibleTenant(
+                tenant_id=cast(
+                    uuid.UUID,
+                    row.tenant_id,
+                ),
+                membership_id=cast(
+                    uuid.UUID,
+                    row.membership_id,
+                ),
+                name=cast(
+                    str,
+                    row.tenant_name,
+                ),
+            )
+            for row in rows
+        )
 
     def resolve_active_access(
         self,
@@ -261,3 +338,4 @@ class SqlAlchemyIdentityRepository(
                 )
 
         return allowed, denied
+

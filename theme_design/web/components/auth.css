@@ -1,0 +1,140 @@
+.og3-auth-page {
+    display: grid;
+    min-height: 100dvh;
+    padding: var(--og3-space-6);
+
+    color: var(--og3-text-primary);
+    background:
+        radial-gradient(circle at top,
+            var(--og3-surface-interactive),
+            transparent 42%),
+        var(--og3-surface-page);
+}
+
+.og3-auth-layout {
+    display: grid;
+    width: 100%;
+    max-width: var(--og3-content-max-width);
+    margin: auto;
+    gap: var(--og3-space-8);
+    align-items: center;
+}
+
+.og3-auth-brand {
+    display: grid;
+    gap: var(--og3-space-3);
+}
+
+.og3-auth-brand__eyebrow {
+    font-weight: var(--og3-font-weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.og3-auth-brand__title {
+    max-width: 12ch;
+}
+
+.og3-auth-brand__description {
+    max-width: 34rem;
+}
+
+.og3-auth-card {
+    width: 100%;
+    max-width: 32rem;
+    justify-self: center;
+    box-shadow: var(--og3-shadow-lg);
+}
+
+.og3-auth-card__heading {
+    display: grid;
+    gap: var(--og3-space-2);
+}
+
+.og3-auth-form {
+    display: grid;
+    gap: var(--og3-space-5);
+}
+
+.og3-auth-submit {
+    width: 100%;
+}
+
+.og3-auth-status {
+    display: grid;
+    gap: var(--og3-space-4);
+}
+
+.og3-auth-selection {
+    display: grid;
+    gap: var(--og3-space-5);
+}
+
+.og3-auth-tenant-list {
+    display: grid;
+    gap: var(--og3-space-3);
+}
+
+.og3-auth-tenant {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.og3-auth-message {
+    display: grid;
+    gap: var(--og3-space-2);
+    padding: var(--og3-space-4);
+
+    border: 1px solid var(--og3-border-default);
+    border-radius: var(--og3-radius-md);
+
+    background: var(--og3-surface-base);
+}
+
+.og3-auth-message--danger {
+    border-color: var(--og3-status-danger);
+}
+
+.og3-auth-message--warning {
+    border-color: var(--og3-status-warning);
+}
+
+.og3-auth-footer {
+    text-align: center;
+}
+
+@media (min-width: 64rem) {
+    .og3-auth-layout {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(24rem, 32rem);
+        column-gap: var(--og3-space-16);
+    }
+
+    .og3-auth-card {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .og3-auth-brand {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .og3-auth-footer {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 40rem) {
+    .og3-auth-page {
+        padding: var(--og3-space-4);
+    }
+
+    .og3-auth-layout {
+        gap: var(--og3-space-6);
+    }
+
+    .og3-auth-card {
+        max-width: none;
+    }
+}

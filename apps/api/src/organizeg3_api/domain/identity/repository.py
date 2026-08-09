@@ -1,4 +1,4 @@
-"""Identity repository contracts."""
+﻿"""Identity repository contracts."""
 
 from __future__ import annotations
 
@@ -19,6 +19,15 @@ class IdentityAccess:
     permission_codes: frozenset[str]
 
 
+@dataclass(frozen=True, slots=True)
+class AccessibleTenant:
+    """Represent one tenant available to an authenticated user."""
+
+    tenant_id: uuid.UUID
+    membership_id: uuid.UUID
+    name: str
+
+
 class IdentityRepository(Protocol):
     """Resolve local identity and authorization information."""
 
@@ -29,3 +38,11 @@ class IdentityRepository(Protocol):
         tenant_id: uuid.UUID,
     ) -> IdentityAccess | None:
         """Resolve active user access inside one tenant."""
+
+    def list_accessible_tenants(
+        self,
+        *,
+        auth_user_id: uuid.UUID,
+    ) -> tuple[AccessibleTenant, ...]:
+        """List active tenants available to one authenticated user."""
+

@@ -1,9 +1,20 @@
-import type { PropsWithChildren } from "react";
+import type {
+    PropsWithChildren,
+} from "react";
 
-type AppProvidersProps = PropsWithChildren;
+import {
+    AuthProvider,
+} from "@/features/auth/session/AuthProvider";
+
+type AppProvidersProps =
+    PropsWithChildren;
 
 export function AppProviders({
     children,
 }: AppProvidersProps) {
-    return children;
+    return (
+        <AuthProvider>
+            {children}
+        </AuthProvider>
+    );
 }
