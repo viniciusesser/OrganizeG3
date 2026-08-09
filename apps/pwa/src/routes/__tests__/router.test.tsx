@@ -32,9 +32,29 @@ vi.mock(
 const getApiHealthMock =
     vi.mocked(getApiHealth);
 
+function renderRoute(
+    path: string,
+) {
+    const router =
+        createMemoryRouter(
+            appRoutes,
+            {
+                initialEntries: [
+                    path,
+                ],
+            },
+        );
+
+    return render(
+        <RouterProvider
+            router={router}
+        />,
+    );
+}
+
 describe("application routes", () => {
     it(
-        "renders the application root route",
+        "renders the application root inside the app shell",
         async () => {
             getApiHealthMock.mockResolvedValue({
                 status: "healthy",
@@ -43,27 +63,24 @@ describe("application routes", () => {
                 version: "0.1.0",
             });
 
-            const router =
-                createMemoryRouter(
-                    appRoutes,
-                    {
-                        initialEntries: [
-                            "/",
-                        ],
-                    },
-                );
-
-            render(
-                <RouterProvider
-                    router={router}
-                />,
-            );
+            renderRoute("/");
 
             expect(
                 screen.getByRole(
                     "heading",
                     {
-                        name: "OrganizeG3",
+                        level: 1,
+                        name: "Visão geral",
+                    },
+                ),
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByRole(
+                    "navigation",
+                    {
+                        name:
+                            "Módulos do sistema",
                     },
                 ),
             ).toBeInTheDocument();
@@ -73,32 +90,52 @@ describe("application routes", () => {
                     "healthy",
                 ),
             ).toBeInTheDocument();
+        },
+    );
+
+    it(
+        "renders a module placeholder inside the shell",
+        () => {
+            renderRoute("/clientes");
 
             expect(
-                screen.getByText(
-                    "organizeg3-api",
+                screen.getByRole(
+                    "heading",
+                    {
+                        level: 1,
+                        name: "Clientes",
+                    },
                 ),
             ).toBeInTheDocument();
+
+            expect(
+                screen.getByRole(
+                    "navigation",
+                    {
+                        name:
+                            "Módulos do sistema",
+                    },
+                ),
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByRole(
+                    "link",
+                    {
+                        name: "Clientes",
+                    },
+                ),
+            ).toHaveClass(
+                "og3-navigation__link--active",
+            );
         },
     );
 
     it(
         "renders the not-found route for an unknown URL",
         () => {
-            const router =
-                createMemoryRouter(
-                    appRoutes,
-                    {
-                        initialEntries: [
-                            "/route-that-does-not-exist",
-                        ],
-                    },
-                );
-
-            render(
-                <RouterProvider
-                    router={router}
-                />,
+            renderRoute(
+                "/route-that-does-not-exist",
             );
 
             expect(
@@ -110,19 +147,35 @@ describe("application routes", () => {
                     },
                 ),
             ).toBeInTheDocument();
+        },
+    );
+
+    it(
+        "keeps the theme preview outside the application shell",
+        () => {
+            renderRoute(
+                "/theme-preview",
+            );
 
             expect(
                 screen.getByRole(
-                    "link",
+                    "heading",
                     {
-                        name:
-                            "Voltar para o início",
+                        level: 1,
+                        name: "OrganizeG3",
                     },
                 ),
-            ).toHaveAttribute(
-                "href",
-                "/",
-            );
+            ).toBeInTheDocument();
+
+            expect(
+                screen.queryByRole(
+                    "navigation",
+                    {
+                        name:
+                            "Módulos do sistema",
+                    },
+                ),
+            ).not.toBeInTheDocument();
         },
     );
 });

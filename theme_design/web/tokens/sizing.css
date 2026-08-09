@@ -8,7 +8,14 @@
     --og3-icon-size-lg: 1.5rem;
 
     --og3-sidebar-width: 17rem;
+    --og3-sidebar-width-compact: 15rem;
+
+    --og3-mobile-drawer-width: 18rem;
+    --og3-mobile-drawer-max-width: 85vw;
+
     --og3-header-height: 4rem;
 
     --og3-content-max-width: 90rem;
+
+    --og3-z-index-overlay: 100;
 }

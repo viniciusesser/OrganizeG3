@@ -1,0 +1,258 @@
+.og3-app-shell {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    display: grid;
+    grid-template-columns:
+        var(--og3-sidebar-width) minmax(0, 1fr);
+
+    grid-template-rows:
+        var(--og3-header-height) minmax(0, 1fr);
+
+    color: var(--og3-text-primary);
+    background: var(--og3-surface-page);
+}
+
+.og3-app-shell__sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+
+    min-width: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--og3-surface-base);
+
+    border-right:
+        1px solid var(--og3-border-subtle);
+
+    overflow: hidden;
+}
+
+.og3-app-shell__brand {
+    min-height: var(--og3-header-height);
+    flex: 0 0 var(--og3-header-height);
+
+    display: flex;
+    align-items: center;
+
+    padding-inline:
+        var(--og3-space-5);
+
+    border-bottom:
+        1px solid var(--og3-border-subtle);
+}
+
+.og3-app-shell__sidebar-content {
+    min-height: 0;
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    padding:
+        var(--og3-space-5);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+}
+
+.og3-app-shell__sidebar-section {
+    display: grid;
+    gap: var(--og3-space-2);
+}
+
+.og3-app-shell__header {
+    grid-column: 2;
+    grid-row: 1;
+
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: var(--og3-space-4);
+
+    padding-inline:
+        var(--og3-space-6);
+
+    background:
+        var(--og3-surface-base);
+
+    border-bottom:
+        1px solid var(--og3-border-subtle);
+
+    position: sticky;
+    top: var(--og3-space-0);
+    z-index: 1;
+}
+
+.og3-app-shell__header-start,
+.og3-app-shell__header-end {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: var(--og3-space-3);
+}
+
+.og3-app-shell__header-start {
+    flex: 1;
+}
+
+.og3-app-shell__header-end {
+    flex: 0 0 auto;
+}
+
+.og3-app-shell__mobile-menu-trigger,
+.og3-app-shell__mobile-brand {
+    display: none;
+}
+
+.og3-app-shell__desktop-context {
+    min-width: 0;
+}
+
+.og3-app-shell__main {
+    grid-column: 2;
+    grid-row: 2;
+
+    min-width: 0;
+    min-height: 0;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+}
+
+.og3-app-shell__content {
+    width: 100%;
+    max-width:
+        var(--og3-content-max-width);
+
+    margin-inline: auto;
+
+    padding:
+        var(--og3-space-6);
+}
+
+.og3-app-shell__page {
+    min-width: 0;
+
+    display: grid;
+    gap: var(--og3-space-6);
+}
+
+.og3-app-shell__page-header {
+    min-width: 0;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: var(--og3-space-4);
+}
+
+.og3-app-shell__page-heading {
+    min-width: 0;
+
+    display: grid;
+    gap: var(--og3-space-2);
+}
+
+.og3-app-shell__page-grid {
+    min-width: 0;
+
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit,
+            minmax(min(var(--og3-sidebar-width),
+                    100%),
+                1fr));
+
+    gap: var(--og3-space-4);
+}
+
+.og3-app-shell__status {
+    display: flex;
+    align-items: center;
+
+    gap: var(--og3-space-2);
+}
+
+@media (max-width: 64rem) {
+    .og3-app-shell {
+        grid-template-columns:
+            var(--og3-sidebar-width-compact) minmax(0, 1fr);
+    }
+
+    .og3-app-shell__sidebar-content {
+        padding:
+            var(--og3-space-4);
+    }
+
+    .og3-app-shell__content {
+        padding:
+            var(--og3-space-5);
+    }
+}
+
+@media (max-width: 48rem) {
+    .og3-app-shell {
+        grid-template-columns:
+            minmax(0, 1fr);
+
+        grid-template-rows:
+            var(--og3-header-height) minmax(0, 1fr);
+    }
+
+    .og3-app-shell__sidebar {
+        display: none;
+    }
+
+    .og3-app-shell__header {
+        grid-column: 1;
+        grid-row: 1;
+
+        padding-inline:
+            var(--og3-space-4);
+    }
+
+    .og3-app-shell__mobile-menu-trigger,
+    .og3-app-shell__mobile-brand {
+        display: flex;
+        align-items: center;
+    }
+
+    .og3-app-shell__desktop-context {
+        display: none;
+    }
+
+    .og3-app-shell__main {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .og3-app-shell__content {
+        padding:
+            var(--og3-space-4);
+    }
+
+    .og3-app-shell__page-header {
+        display: grid;
+    }
+
+    .og3-app-shell__page-grid {
+        grid-template-columns:
+            minmax(0, 1fr);
+    }
+}

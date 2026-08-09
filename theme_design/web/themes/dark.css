@@ -19,6 +19,9 @@
     --og3-surface-interactive-hover:
         var(--og3-color-neutral-700);
 
+    --og3-surface-backdrop:
+        rgb(0 0 0 / 60%);
+
     --og3-text-primary:
         var(--og3-color-neutral-050);
 

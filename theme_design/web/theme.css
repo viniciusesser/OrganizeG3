@@ -14,4 +14,7 @@
 @import "./components/badges.css";
 @import "./components/surfaces.css";
 @import "./components/typography.css";
+@import "./components/navigation.css";
+@import "./components/app-shell.css";
+@import "./components/mobile-navigation.css";
 @import "./components/theme-preview.css";
