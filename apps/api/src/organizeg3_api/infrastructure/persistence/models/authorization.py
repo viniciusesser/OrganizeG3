@@ -304,10 +304,7 @@ class TenantMembershipPermissionOverrideModel(Base):
         Uuid(as_uuid=True),
         ForeignKey(
             "permissions.id",
-            name=(
-                "fk_tenant_membership_permission_"
-                "overrides_permission_id_permissions"
-            ),
+            name="fk_tm_permission_overrides_permission",
             ondelete="RESTRICT",
         ),
         primary_key=True,
