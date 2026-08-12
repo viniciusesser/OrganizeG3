@@ -6,6 +6,7 @@ import {
 
 import {
     createApplicationEnvironment,
+    hasSupabaseBrowserConfiguration,
     requireSupabaseBrowserConfiguration,
 } from "@/infrastructure/environment/environment";
 
@@ -42,6 +43,12 @@ describe(
                 ).toBe(
                     "public-key",
                 );
+
+                expect(
+                    hasSupabaseBrowserConfiguration(
+                        environment,
+                    ),
+                ).toBe(true);
             },
         );
 
@@ -67,6 +74,37 @@ describe(
                 expect(
                     environment.supabaseAnonKey,
                 ).toBeNull();
+
+                expect(
+                    hasSupabaseBrowserConfiguration(
+                        environment,
+                    ),
+                ).toBe(false);
+            },
+        );
+
+        it(
+            "treats a partial Supabase configuration as unavailable",
+            () => {
+                const environment =
+                    createApplicationEnvironment({
+                        apiBaseUrl:
+                            "/api",
+                        supabaseUrl:
+                            "https://example.supabase.co",
+                        isDevelopment:
+                            true,
+                        isProduction:
+                            false,
+                        mode:
+                            "test",
+                    });
+
+                expect(
+                    hasSupabaseBrowserConfiguration(
+                        environment,
+                    ),
+                ).toBe(false);
             },
         );
 

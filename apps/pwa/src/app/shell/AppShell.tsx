@@ -17,6 +17,9 @@ import {
     Heading,
     Text,
 } from "@/shared/components/ui";
+import {
+    usePwa,
+} from "@/infrastructure/pwa/usePwa";
 
 export interface AppShellProps {
     readonly children: ReactNode;
@@ -25,6 +28,12 @@ export interface AppShellProps {
 export function AppShell({
     children,
 }: AppShellProps) {
+    const {
+        canInstall,
+        installApp,
+        isOnline,
+    } = usePwa();
+
     const [
         isMobileNavigationOpen,
         setIsMobileNavigationOpen,
@@ -98,9 +107,29 @@ export function AppShell({
                 </div>
 
                 <div className="og3-app-shell__header-end">
-                    <Badge variant="success">
-                        API conectada
+                    <Badge
+                        variant={
+                            isOnline
+                                ? "success"
+                                : "warning"
+                        }
+                    >
+                        {isOnline
+                            ? "Online"
+                            : "Sem conexão"}
                     </Badge>
+
+                    {canInstall ? (
+                        <Button
+                            onClick={() => {
+                                void installApp();
+                            }}
+                            size="sm"
+                            variant="secondary"
+                        >
+                            Instalar aplicativo
+                        </Button>
+                    ) : null}
                 </div>
             </header>
 

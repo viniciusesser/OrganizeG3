@@ -13,17 +13,71 @@ import {
 export interface ApiRequestOptions
     extends Omit<RequestInit, "body"> {
     readonly body?: unknown;
+    readonly useApiBaseUrl?: boolean;
+}
+
+function normalizePath(
+    path: string,
+): string {
+    return path.startsWith("/")
+        ? path
+        : `/${path}`;
+}
+
+function joinApiBaseUrl(
+    normalizedPath: string,
+): string {
+    const apiBaseUrl =
+        environment.apiBaseUrl;
+
+    const lastSeparatorIndex =
+        apiBaseUrl.lastIndexOf("/");
+
+    if (lastSeparatorIndex < 0) {
+        return `${apiBaseUrl}${normalizedPath}`;
+    }
+
+    const baseRoute =
+        apiBaseUrl.slice(
+            lastSeparatorIndex,
+        );
+
+    const pathAlreadyContainsBaseRoute =
+        baseRoute.length > 1 &&
+        (
+            normalizedPath === baseRoute ||
+            normalizedPath.startsWith(
+                `${baseRoute}/`,
+            )
+        );
+
+    if (pathAlreadyContainsBaseRoute) {
+        return (
+            apiBaseUrl.slice(
+                0,
+                lastSeparatorIndex,
+            ) +
+            normalizedPath
+        );
+    }
+
+    return `${apiBaseUrl}${normalizedPath}`;
 }
 
 function buildUrl(
     path: string,
+    useApiBaseUrl: boolean,
 ): string {
     const normalizedPath =
-        path.startsWith("/")
-            ? path
-            : `/${path}`;
+        normalizePath(path);
 
-    return `${environment.apiBaseUrl}${normalizedPath}`;
+    if (!useApiBaseUrl) {
+        return normalizedPath;
+    }
+
+    return joinApiBaseUrl(
+        normalizedPath,
+    );
 }
 
 function buildHeaders(
@@ -170,14 +224,20 @@ export async function apiRequest<
     path: string,
     options: ApiRequestOptions = {},
 ): Promise<TResponse> {
+    const {
+        body: requestBody,
+        useApiBaseUrl = true,
+        ...requestInit
+    } = options;
+
     const headers =
         buildHeaders(
-            options.headers,
+            requestInit.headers,
         );
 
     const body =
         serializeBody(
-            options.body,
+            requestBody,
             headers,
         );
 
@@ -185,9 +245,12 @@ export async function apiRequest<
 
     try {
         response = await fetch(
-            buildUrl(path),
+            buildUrl(
+                path,
+                useApiBaseUrl,
+            ),
             {
-                ...options,
+                ...requestInit,
                 headers,
                 body,
             },

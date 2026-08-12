@@ -30,13 +30,17 @@ function normalizeApiBaseUrl(
         return DEFAULT_API_BASE_URL;
     }
 
-    const normalized = value.trim();
+    const normalized =
+        value.trim();
 
     if (normalized.length === 0) {
         return DEFAULT_API_BASE_URL;
     }
 
-    return normalized.replace(/\/+$/, "");
+    return normalized.replace(
+        /\/+$/,
+        "",
+    );
 }
 
 function normalizeOptionalValue(
@@ -46,7 +50,8 @@ function normalizeOptionalValue(
         return null;
     }
 
-    const normalized = value.trim();
+    const normalized =
+        value.trim();
 
     return normalized.length > 0
         ? normalized
@@ -57,15 +62,18 @@ export function createApplicationEnvironment(
     source: ApplicationEnvironmentSource,
 ): ApplicationEnvironment {
     return Object.freeze({
-        apiBaseUrl: normalizeApiBaseUrl(
-            source.apiBaseUrl,
-        ),
-        supabaseUrl: normalizeOptionalValue(
-            source.supabaseUrl,
-        ),
-        supabaseAnonKey: normalizeOptionalValue(
-            source.supabaseAnonKey,
-        ),
+        apiBaseUrl:
+            normalizeApiBaseUrl(
+                source.apiBaseUrl,
+            ),
+        supabaseUrl:
+            normalizeOptionalValue(
+                source.supabaseUrl,
+            ),
+        supabaseAnonKey:
+            normalizeOptionalValue(
+                source.supabaseAnonKey,
+            ),
         isDevelopment:
             source.isDevelopment,
         isProduction:
@@ -75,13 +83,24 @@ export function createApplicationEnvironment(
     });
 }
 
+export function hasSupabaseBrowserConfiguration(
+    source: ApplicationEnvironment =
+        environment,
+): boolean {
+    return (
+        source.supabaseUrl !== null &&
+        source.supabaseAnonKey !== null
+    );
+}
+
 export function requireSupabaseBrowserConfiguration(
     source: ApplicationEnvironment =
         environment,
 ): SupabaseBrowserConfiguration {
     if (
-        source.supabaseUrl === null ||
-        source.supabaseAnonKey === null
+        !hasSupabaseBrowserConfiguration(
+            source,
+        )
     ) {
         throw new Error(
             "A configuração pública do Supabase não foi definida.",
@@ -89,8 +108,10 @@ export function requireSupabaseBrowserConfiguration(
     }
 
     return Object.freeze({
-        url: source.supabaseUrl,
-        anonKey: source.supabaseAnonKey,
+        url:
+            source.supabaseUrl as string,
+        anonKey:
+            source.supabaseAnonKey as string,
     });
 }
 

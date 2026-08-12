@@ -12,6 +12,9 @@ import type {
 import {
     getSupabaseClient,
 } from "@/infrastructure/auth/supabaseClient";
+import {
+    hasSupabaseBrowserConfiguration,
+} from "@/infrastructure/environment/environment";
 
 export interface SignInCredentials {
     readonly email: string;
@@ -40,6 +43,24 @@ function normalizeCredential(
     }
 
     return normalized;
+}
+
+function requireAuthenticationConfiguration():
+    void {
+    if (
+        hasSupabaseBrowserConfiguration()
+    ) {
+        return;
+    }
+
+    throw new AuthClientError({
+        code:
+            "authentication.configuration_missing",
+        message:
+            "A autenticação ainda não foi configurada neste ambiente.",
+        causeMessage:
+            "As variáveis públicas do Supabase não foram definidas.",
+    });
 }
 
 export function mapSupabaseSession(
@@ -73,6 +94,8 @@ export async function signInWithPassword(
             credentials.password,
             "Senha",
         );
+
+    requireAuthenticationConfiguration();
 
     const client =
         getSupabaseClient();
@@ -114,6 +137,12 @@ export async function signInWithPassword(
 
 export async function getStoredAuthSession():
     Promise<AuthSession | null> {
+    if (
+        !hasSupabaseBrowserConfiguration()
+    ) {
+        return null;
+    }
+
     const client =
         getSupabaseClient();
 
@@ -146,6 +175,12 @@ export async function getStoredAuthSession():
 export function onAuthSessionChange(
     listener: AuthSessionListener,
 ): () => void {
+    if (
+        !hasSupabaseBrowserConfiguration()
+    ) {
+        return () => undefined;
+    }
+
     const client =
         getSupabaseClient();
 
@@ -175,6 +210,12 @@ export function onAuthSessionChange(
 
 export async function signOut():
     Promise<void> {
+    if (
+        !hasSupabaseBrowserConfiguration()
+    ) {
+        return;
+    }
+
     const client =
         getSupabaseClient();
 

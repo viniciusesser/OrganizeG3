@@ -11,7 +11,7 @@ import {
 
 describe("getApiHealth", () => {
     it(
-        "requests the API health endpoint",
+        "requests the API health endpoint outside the API prefix",
         async () => {
             const fetchMock =
                 vi.fn<typeof fetch>();
@@ -55,7 +55,7 @@ describe("getApiHealth", () => {
 
             expect(
                 fetchMock.mock.calls[0]?.[0],
-            ).toBe("/api/health");
+            ).toBe("/health");
         },
     );
 });

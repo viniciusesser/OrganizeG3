@@ -108,6 +108,77 @@ describe("apiRequest", () => {
     );
 
     it(
+        "does not duplicate the configured API base path",
+        async () => {
+            const fetchMock =
+                vi.fn<typeof fetch>();
+
+            fetchMock.mockResolvedValue(
+                createJsonResponse({
+                    status: "ok",
+                }),
+            );
+
+            vi.stubGlobal(
+                "fetch",
+                fetchMock,
+            );
+
+            await apiRequest(
+                "/api/v1/example",
+            );
+
+            expect(
+                fetchMock.mock.calls[0]?.[0],
+            ).toBe(
+                "/api/v1/example",
+            );
+        },
+    );
+
+    it(
+        "can request an endpoint outside the API base path",
+        async () => {
+            const fetchMock =
+                vi.fn<typeof fetch>();
+
+            fetchMock.mockResolvedValue(
+                createJsonResponse({
+                    status: "ok",
+                }),
+            );
+
+            vi.stubGlobal(
+                "fetch",
+                fetchMock,
+            );
+
+            await apiRequest(
+                "/health",
+                {
+                    method: "GET",
+                    useApiBaseUrl: false,
+                },
+            );
+
+            const [
+                url,
+                requestInit,
+            ] = fetchMock.mock.calls[0] ?? [];
+
+            expect(url).toBe(
+                "/health",
+            );
+
+            expect(
+                requestInit,
+            ).not.toHaveProperty(
+                "useApiBaseUrl",
+            );
+        },
+    );
+
+    it(
         "serializes plain objects as JSON",
         async () => {
             const fetchMock =

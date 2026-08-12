@@ -97,7 +97,7 @@ describe("AppShell", () => {
 
             expect(
                 screen.getByText(
-                    "API conectada",
+                    "Online",
                 ),
             ).toBeInTheDocument();
         },
