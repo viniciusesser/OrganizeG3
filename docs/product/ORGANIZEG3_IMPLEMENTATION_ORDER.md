@@ -2,6 +2,7 @@
 
 **Status:** Documento oficial vigente  
 **Versão inicial:** 2026-08-10  
+**Atualizado em:** 2026-08-12
 **Escopo:** Ordem de desenvolvimento do OrganizeG3 a partir da arquitetura atual.
 
 ---
@@ -127,8 +128,8 @@ PHASE 01 — PLATFORM FOUNDATION             100%
 PHASE 02 — CORE DOMAIN                    100%
 PHASE 03 — APPLICATION & API              100%
 
-PHASE 04 — WEB / PWA INTEGRATION          EM ANDAMENTO
-PHASE 05 — UX/UI                          PENDENTE
+PHASE 04 — WEB / PWA INTEGRATION          100% — CONCLUÍDA
+PHASE 05 — UX/UI                          PRÓXIMO
 PHASE 06 — MODULE IMPLEMENTATION          PENDENTE
 PHASE 07 — QUALITY & SECURITY             PENDENTE
 PHASE 08 — RELEASE ENGINEERING            PENDENTE
@@ -141,10 +142,10 @@ Estado:
 04.2 Theme Design Foundation              concluído
 04.3 App Shell                            concluído
 04.4 Authentication Integration           concluído
-04.5 First Real Screens                   próximo
-04.6 Shared UI Patterns                   pendente
-04.7 PWA Integration                      pendente
-04.8 Integration Gates                    pendente
+04.5 First Real Screens                   concluído
+04.6 Shared UI Patterns                   concluído
+04.7 PWA Integration                      concluído
+04.8 Integration Gates                    concluído
 9. Regra da Phase 04
 
 A Phase 04 não implementará todos os módulos completos.
@@ -161,6 +162,8 @@ componentes compartilhados;
 comportamento responsivo;
 infraestrutura PWA.
 10. Phase 04.5 — First Real Screens
+
+Status: CONCLUÍDO
 
 A primeira tela real será:
 
@@ -234,6 +237,8 @@ A arquitetura deve apenas permitir essas evoluções.
 
 15. Phase 04.6 — Shared UI Patterns
 
+Status: CONCLUÍDO
+
 Depois de Clientes provar o padrão, consolidar componentes compartilhados.
 
 Exemplos:
@@ -270,6 +275,8 @@ tamanhos visuais;
 estados visuais.
 17. Phase 04.7 — PWA Integration
 
+Status: CONCLUÍDO
+
 Após os padrões de tela estarem estabilizados:
 
 manifest
@@ -283,6 +290,8 @@ device behavior
 Offline avançado não deve ser implementado sem regras claras por módulo.
 
 18. Phase 04.8 — Integration Gates
+
+Status: CONCLUÍDO EM 2026-08-12
 
 Antes de fechar Phase 04:
 
@@ -299,7 +308,17 @@ tenant isolation
 permission behavior
 responsive validation
 PWA validation
+
+Evidências finais:
+
+API: 1.390 testes aprovados, compilação, Ruff e mypy aprovados em 258 arquivos.
+PWA: 39 arquivos de teste e 218 testes aprovados, lint, typecheck e build aprovados.
+Banco: código e PostgreSQL na revisão Alembic b7c2a91d4e6f.
+Integração: autenticação, identidade, tenant e consulta real de clientes aprovados.
+PWA: instalação standalone, manifesto, service worker, cache e comportamento offline aprovados.
 19. Phase 05 — UX/UI
+
+Status: PRÓXIMO
 
 A fundação visual já começou antecipadamente em Phase 04.
 
@@ -365,7 +384,8 @@ Filiais
 Unidades
 Categorias
 
-Parte desses cadastros já possui domínio/API e parte será validada na Phase 04.
+Parte desses cadastros já possui domínio/API, e as telas de referência foram
+validadas na Phase 04. As expansões funcionais permanecem na Phase 06.
 
 23. Fornecedores e catálogo
 
@@ -1108,32 +1128,29 @@ exigir validação explícita e backup quando aplicável.
 
 A partir do estado atual:
 
-1. concluir documentação funcional estrutural
-2. reconciliar roadmap
-3. commit da documentação
-4. iniciar 04.5.1 — Clientes
-5. validar padrão de Clientes
-6. consolidar Shared UI Patterns
-7. aplicar padrão aos demais cadastros do 04.5
-8. concluir 04.6
-9. implementar 04.7 PWA
-10. executar 04.8 Integration Gates
+1. registrar a conclusão integral da Phase 04
+2. revisar e versionar a documentação oficial
+3. iniciar a Phase 05 — UX/UI
+4. auditar arquitetura da informação e navegação
+5. auditar acessibilidade, feedback e estados responsivos
+6. consolidar a experiência dos módulos complexos
+7. executar os gates definidos para cada fatia da Phase 05
 88. Próxima fatia de código
 
-A próxima fatia oficial de código será:
+A próxima etapa oficial será:
 
-04.5.1 — Clientes
-89. Preparação de Clientes
+Phase 05 — UX/UI
+89. Preparação da Phase 05
 
 Antes de alterar código:
 
-1. revisar contrato atual da API
-2. revisar domínio e schemas
-3. revisar permissões
-4. revisar paginação/filtros existentes
-5. revisar frontend placeholder
-6. definir contrato da tela
-7. implementar verticalmente
+1. inventariar os fluxos e padrões visuais já implementados
+2. comparar navegação desktop e móvel
+3. revisar acessibilidade e contraste
+4. mapear feedback, loading, erro e estados vazios
+5. identificar fluxos complexos que exigem melhoria
+6. definir a decomposição interna da Phase 05
+7. implementar e validar uma fatia por vez
 90. Regra final
 
 O objetivo da ordem oficial não é impedir evolução.
@@ -1155,5 +1172,7 @@ integrações
 automação
 ↓
 inteligência
+
+```
 
 Cada nova camada deve se apoiar em algo já validado.

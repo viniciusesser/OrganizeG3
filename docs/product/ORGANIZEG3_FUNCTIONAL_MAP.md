@@ -1,7 +1,8 @@
-﻿# OrganizeG3 — Mapa Funcional Oficial
+# OrganizeG3 — Mapa Funcional Oficial
 
 **Status:** Documento vivo  
 **Versão inicial:** 2026-08-10  
+**Atualizado em:** 2026-08-12
 **Objetivo:** Consolidar as funcionalidades previstas para o OrganizeG3, incluindo recursos do sistema legado, novas decisões de produto e funcionalidades futuras.
 
 ---
@@ -693,6 +694,8 @@ Cliente - Projeto
 ├── 04 Plano de Corte
 ├── 05 Documentos
 └── 06 Entrega
+
+```
 
 A estrutura poderá ser configurável.
 
@@ -1509,21 +1512,19 @@ Que permissões se aplicam?
 Que eventos precisam ser auditados?
 Que documentos dependem desses dados?
 Que integrações futuras dependem dele?
-36. Próxima sequência de trabalho
+# 36. Próxima sequência de trabalho
 
-A ordem aprovada após a conclusão da autenticação é:
+A ordem aprovada após a conclusão da Phase 04 é:
 
-1. Consolidar Mapa Funcional Oficial
-2. Especificar Document Engine
-3. Especificar Catálogo Oficial de Tags
-4. Especificar Workspace de Projetos
-5. Especificar Migração Legado → OrganizeG3
-6. Especificar Rascunho XML
-7. Especificar WhatsApp → Lead
-8. Atualizar roadmap oficial
-9. Retomar Phase 04.5 — First Real Screens
-10. Iniciar 04.5.1 — Clientes
-37. Regra de decisão final
+1. Registrar e versionar a conclusão da Phase 04.
+2. Iniciar a Phase 05 — UX/UI.
+3. Auditar arquitetura da informação e navegação.
+4. Auditar acessibilidade, feedback e responsividade.
+5. Consolidar a experiência dos módulos complexos.
+6. Preservar o `theme_design` como fonte visual única.
+7. Executar os gates correspondentes a cada fatia da Phase 05.
+
+# 37. Regra de decisão final
 
 Uma funcionalidade do sistema anterior somente pode ter um dos destinos:
 
@@ -1535,22 +1536,32 @@ REMOVER
 
 Nenhuma funcionalidade relevante deve desaparecer por esquecimento.
 
-38. Estado atual do desenvolvimento
+# 38. Estado atual do desenvolvimento
 PHASE 01 — PLATFORM FOUNDATION             100%
 PHASE 02 — CORE DOMAIN                    100%
 PHASE 03 — APPLICATION & API              100%
 
-PHASE 04 — WEB / PWA INTEGRATION          EM ANDAMENTO
+PHASE 04 — WEB / PWA INTEGRATION          100% — CONCLUÍDA
+PHASE 05 — UX/UI                          PRÓXIMO
 
 04.1 Frontend Foundation                  100%
 04.2 Theme Design Foundation              100%
 04.3 App Shell                            100%
 04.4 Authentication Integration           100%
-04.5 First Real Screens                   pendente
-04.6 Shared UI Patterns                   pendente
-04.7 PWA Integration                      pendente
-04.8 Integration Gates                    pendente
-39. Observação
+04.5 First Real Screens                   100%
+04.6 Shared UI Patterns                   100%
+04.7 PWA Integration                      100%
+04.8 Integration Gates                    100%
+
+Evidências da conclusão da Phase 04:
+
+- API: 1.390 testes aprovados, Ruff e mypy aprovados em 258 arquivos;
+- PWA: 39 arquivos de teste e 218 testes aprovados, lint, typecheck e build aprovados;
+- banco: código e PostgreSQL alinhados na revisão Alembic `b7c2a91d4e6f`;
+- integração: autenticação, identidade, tenant e consulta real de clientes aprovados;
+- PWA: instalação standalone, manifesto, service worker, cache e comportamento offline aprovados.
+
+# 39. Observação
 
 Este mapa deve permanecer um documento vivo.
 
