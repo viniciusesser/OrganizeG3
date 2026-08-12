@@ -3,6 +3,33 @@ import type {
 } from "react-router";
 
 import {
+    BranchesRoute,
+} from "@/features/branches/routes/BranchesRoute";
+import {
+    BrandsRoute,
+} from "@/features/brands/routes/BrandsRoute";
+import {
+    CompanyRoute,
+} from "@/features/company/routes/CompanyRoute";
+import {
+    CustomersRoute,
+} from "@/features/customers/routes/CustomersRoute";
+import {
+    EmployeesRoute,
+} from "@/features/employees/routes/EmployeesRoute";
+import {
+    MachinesRoute,
+} from "@/features/machines/routes/MachinesRoute";
+import {
+    MaterialsRoute,
+} from "@/features/materials/routes/MaterialsRoute";
+import {
+    ServicesRoute,
+} from "@/features/services/routes/ServicesRoute";
+import {
+    SuppliersRoute,
+} from "@/features/suppliers/routes/SuppliersRoute";
+import {
     AppShellRoute,
 } from "@/routes/AppShellRoute";
 import {
@@ -12,109 +39,87 @@ import {
     RootRoute,
 } from "@/routes/RootRoute";
 import {
-    ModulePlaceholderRoute,
-} from "@/routes/placeholders/ModulePlaceholderRoute";
-import {
     ThemePreviewRoute,
 } from "@/routes/theme-preview/ThemePreviewRoute";
 
-export const appRoutes: RouteObject[] = [
-    {
-        Component: AppShellRoute,
-        children: [
-            {
-                index: true,
-                Component: RootRoute,
-            },
-            {
-                path: "clientes",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Cadastro e gestão dos clientes da empresa."
-                        title="Clientes"
-                    />
-                ),
-            },
-            {
-                path: "fornecedores",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Cadastro e gestão dos fornecedores."
-                        title="Fornecedores"
-                    />
-                ),
-            },
-            {
-                path: "materiais",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Materiais utilizados nas operações da empresa."
-                        title="Materiais"
-                    />
-                ),
-            },
-            {
-                path: "servicos",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Serviços executados ou comercializados pela empresa."
-                        title="Serviços"
-                    />
-                ),
-            },
-            {
-                path: "maquinas",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Cadastro e acompanhamento das máquinas."
-                        title="Máquinas"
-                    />
-                ),
-            },
-            {
-                path: "marcas",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Cadastro das marcas utilizadas pelo sistema."
-                        title="Marcas"
-                    />
-                ),
-            },
-            {
-                path: "funcionarios",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Cadastro e gestão dos funcionários."
-                        title="Funcionários"
-                    />
-                ),
-            },
-            {
-                path: "empresa",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Informações principais da empresa."
-                        title="Empresa"
-                    />
-                ),
-            },
-            {
-                path: "filiais",
-                element: (
-                    <ModulePlaceholderRoute
-                        description="Estrutura e gestão das filiais."
-                        title="Filiais"
-                    />
-                ),
-            },
-        ],
-    },
-    {
-        path: "/theme-preview",
-        Component: ThemePreviewRoute,
-    },
-    {
-        path: "*",
-        Component: NotFoundRoute,
-    },
-];
+export const appRoutes:
+    RouteObject[] = [
+        {
+            Component:
+                AppShellRoute,
+            children: [
+                {
+                    index:
+                        true,
+                    Component:
+                        RootRoute,
+                },
+                {
+                    path:
+                        "clientes",
+                    Component:
+                        CustomersRoute,
+                },
+                {
+                    path:
+                        "fornecedores",
+                    Component:
+                        SuppliersRoute,
+                },
+                {
+                    path:
+                        "materiais",
+                    Component:
+                        MaterialsRoute,
+                },
+                {
+                    path:
+                        "servicos",
+                    Component:
+                        ServicesRoute,
+                },
+                {
+                    path:
+                        "maquinas",
+                    Component:
+                        MachinesRoute,
+                },
+                {
+                    path:
+                        "marcas",
+                    Component:
+                        BrandsRoute,
+                },
+                {
+                    path:
+                        "funcionarios",
+                    Component:
+                        EmployeesRoute,
+                },
+                {
+                    path:
+                        "empresa",
+                    Component:
+                        CompanyRoute,
+                },
+                {
+                    path:
+                        "filiais",
+                    Component:
+                        BranchesRoute,
+                },
+            ],
+        },
+        {
+            path:
+                "/theme-preview",
+            Component:
+                ThemePreviewRoute,
+        },
+        {
+            path:
+                "*",
+            Component:
+                NotFoundRoute,
+        },
+    ];

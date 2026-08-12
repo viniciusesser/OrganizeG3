@@ -1,0 +1,26 @@
+.og3-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--og3-space-4);
+    padding-top: var(--og3-space-4);
+    margin-top: var(--og3-space-4);
+    border-top: 1px solid var(--og3-border-subtle);
+}
+
+.og3-pagination__actions {
+    display: flex;
+    gap: var(--og3-space-2);
+}
+
+@media (max-width: 40rem) {
+    .og3-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .og3-pagination__actions,
+    .og3-pagination__actions .og3-button {
+        width: 100%;
+    }
+}

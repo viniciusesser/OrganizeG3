@@ -18,4 +18,9 @@
 @import "./components/app-shell.css";
 @import "./components/mobile-navigation.css";
 @import "./components/auth.css";
+@import "./components/data-table.css";
+@import "./components/page-layout.css";
+@import "./components/dialog.css";
+@import "./components/pagination.css";
+@import "./components/pwa.css";
 @import "./components/theme-preview.css";
