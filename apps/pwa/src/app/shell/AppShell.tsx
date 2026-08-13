@@ -1,9 +1,14 @@
 import {
+    useEffect,
+    useMemo,
     useState,
 } from "react";
 import type {
     ReactNode,
 } from "react";
+import {
+    useLocation,
+} from "react-router";
 
 import {
     DesktopNavigation,
@@ -11,6 +16,11 @@ import {
 import {
     MobileNavigation,
 } from "@/app/navigation/MobileNavigation";
+import {
+    findNavigationContext,
+    getNavigationContextLabel,
+    getNavigationDocumentTitle,
+} from "@/app/navigation/navigation";
 import {
     usePwa,
 } from "@/infrastructure/pwa/usePwa";
@@ -22,12 +32,18 @@ import {
 } from "@/shared/components/ui";
 
 export interface AppShellProps {
+    readonly activeTenantName?:
+    string | null;
     readonly children: ReactNode;
 }
 
 export function AppShell({
+    activeTenantName = null,
     children,
 }: AppShellProps) {
+    const location =
+        useLocation();
+
     const {
         canInstall,
         installApp,
@@ -38,6 +54,53 @@ export function AppShell({
         isMobileNavigationOpen,
         setIsMobileNavigationOpen,
     ] = useState(false);
+
+    const navigationContext =
+        useMemo(
+            () =>
+                findNavigationContext(
+                    location.pathname,
+                ),
+            [
+                location.pathname,
+            ],
+        );
+
+    const normalizedTenantName =
+        activeTenantName?.trim() ?? "";
+
+    const tenantLabel =
+        normalizedTenantName.length > 0
+            ? normalizedTenantName
+            : "Ambiente principal";
+
+    const pageContextLabel =
+        getNavigationContextLabel(
+            navigationContext,
+        );
+
+    const pageTitle =
+        getNavigationDocumentTitle(
+            navigationContext,
+        );
+
+    useEffect(
+        () => {
+            const previousTitle =
+                document.title;
+
+            document.title =
+                pageTitle;
+
+            return () => {
+                document.title =
+                    previousTitle;
+            };
+        },
+        [
+            pageTitle,
+        ],
+    );
 
     function openMobileNavigation(): void {
         setIsMobileNavigationOpen(
@@ -55,6 +118,13 @@ export function AppShell({
         <div
             className="og3-app-shell"
         >
+            <a
+                className="og3-skip-link"
+                href="#og3-main-content"
+            >
+                Ir para o conteúdo principal
+            </a>
+
             <aside
                 aria-label="Navegação principal"
                 className="og3-app-shell__sidebar"
@@ -116,9 +186,15 @@ export function AppShell({
                     >
                         <Text
                             size="sm"
+                        >
+                            {tenantLabel}
+                        </Text>
+
+                        <Text
+                            size="sm"
                             tone="secondary"
                         >
-                            Ambiente principal
+                            {pageContextLabel}
                         </Text>
                     </div>
                 </div>
@@ -126,19 +202,26 @@ export function AppShell({
                 <div
                     className="og3-app-shell__header-end"
                 >
-                    <Badge
-                        variant={
-                            isOnline
-                                ? "success"
-                                : "warning"
-                        }
+                    <div
+                        aria-atomic="true"
+                        aria-live="polite"
+                        className="og3-app-shell__status"
+                        role="status"
                     >
-                        {
-                            isOnline
-                                ? "Online"
-                                : "Sem conexão"
-                        }
-                    </Badge>
+                        <Badge
+                            variant={
+                                isOnline
+                                    ? "success"
+                                    : "warning"
+                            }
+                        >
+                            {
+                                isOnline
+                                    ? "Online"
+                                    : "Sem conexão"
+                            }
+                        </Badge>
+                    </div>
 
                     {canInstall ? (
                         <Button
@@ -156,6 +239,8 @@ export function AppShell({
 
             <main
                 className="og3-app-shell__main"
+                id="og3-main-content"
+                tabIndex={-1}
             >
                 <div
                     className="og3-app-shell__content"
@@ -165,11 +250,17 @@ export function AppShell({
             </main>
 
             <MobileNavigation
+                activeTenantName={
+                    tenantLabel
+                }
                 isOpen={
                     isMobileNavigationOpen
                 }
                 onClose={
                     closeMobileNavigation
+                }
+                pageContextLabel={
+                    pageContextLabel
                 }
             />
         </div>

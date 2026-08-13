@@ -26,32 +26,52 @@ describe("DesktopNavigation", () => {
             );
 
             expect(
-                screen.getByText(
-                    "Visão geral",
+                screen.getByRole(
+                    "region",
+                    {
+                        name:
+                            "Visão geral",
+                    },
                 ),
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
-                    "Comercial",
+                screen.getByRole(
+                    "region",
+                    {
+                        name:
+                            "Comercial",
+                    },
                 ),
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
-                    "Operações",
+                screen.getByRole(
+                    "region",
+                    {
+                        name:
+                            "Operações",
+                    },
                 ),
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
-                    "Pessoas",
+                screen.getByRole(
+                    "region",
+                    {
+                        name:
+                            "Pessoas",
+                    },
                 ),
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
-                    "Organização",
+                screen.getByRole(
+                    "region",
+                    {
+                        name:
+                            "Organização",
+                    },
                 ),
             ).toBeInTheDocument();
         },
@@ -94,7 +114,8 @@ describe("DesktopNavigation", () => {
                 screen.getByRole(
                     "link",
                     {
-                        name: "Funcionários",
+                        name:
+                            "Funcionários",
                     },
                 ),
             ).toHaveAttribute(
@@ -117,15 +138,25 @@ describe("DesktopNavigation", () => {
                 </MemoryRouter>,
             );
 
-            expect(
+            const customersLink =
                 screen.getByRole(
                     "link",
                     {
                         name: "Clientes",
                     },
-                ),
+                );
+
+            expect(
+                customersLink,
             ).toHaveClass(
                 "og3-navigation__link--active",
+            );
+
+            expect(
+                customersLink,
+            ).toHaveAttribute(
+                "aria-current",
+                "page",
             );
 
             expect(

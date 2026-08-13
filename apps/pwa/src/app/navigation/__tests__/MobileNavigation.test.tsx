@@ -28,8 +28,10 @@ function renderMobileNavigation({
     const view = render(
         <MemoryRouter>
             <MobileNavigation
+                activeTenantName="Marcenaria Galdino"
                 isOpen={isOpen}
                 onClose={onClose}
+                pageContextLabel="Comercial • Clientes"
             />
         </MemoryRouter>,
     );
@@ -300,6 +302,25 @@ describe(
                 ).toHaveBeenCalledTimes(
                     1,
                 );
+            },
+        );
+
+        it(
+            "shows tenant and current page context",
+            () => {
+                renderMobileNavigation();
+
+                expect(
+                    screen.getByText(
+                        "Marcenaria Galdino",
+                    ),
+                ).toBeInTheDocument();
+
+                expect(
+                    screen.getByText(
+                        "Comercial • Clientes",
+                    ),
+                ).toBeInTheDocument();
             },
         );
     },

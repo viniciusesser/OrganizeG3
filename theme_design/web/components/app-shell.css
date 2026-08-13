@@ -14,6 +14,47 @@
     background: var(--og3-surface-page);
 }
 
+.og3-skip-link {
+    position: fixed;
+    inset-block-start: var(--og3-space-3);
+    inset-inline-start: var(--og3-space-3);
+
+    z-index:
+        var(--og3-z-index-overlay);
+
+    padding:
+        var(--og3-space-3) var(--og3-space-4);
+
+    color: var(--og3-text-primary);
+    background:
+        var(--og3-surface-base);
+
+    border:
+        1px solid var(--og3-focus-ring);
+
+    border-radius:
+        var(--og3-radius-md);
+
+    box-shadow:
+        var(--og3-shadow-lg);
+
+    text-decoration: none;
+
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-100%);
+
+    transition:
+        opacity var(--og3-transition-fast),
+        transform var(--og3-transition-fast);
+}
+
+.og3-skip-link:focus {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
 .og3-app-shell__sidebar {
     grid-column: 1;
     grid-row: 1 / -1;
@@ -119,6 +160,15 @@
 
 .og3-app-shell__desktop-context {
     min-width: 0;
+
+    display: grid;
+    gap: var(--og3-space-1);
+}
+
+.og3-app-shell__desktop-context>* {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .og3-app-shell__main {

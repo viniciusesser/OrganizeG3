@@ -34,7 +34,12 @@ export function AppShellRoute() {
     }
 
     return (
-        <AppShell>
+        <AppShell
+            activeTenantName={
+                auth.selectedTenant
+                    ?.name ?? null
+            }
+        >
             <Outlet />
         </AppShell>
     );

@@ -16,10 +16,28 @@ import {
     AppShell,
 } from "@/app/shell/AppShell";
 
-function renderAppShell() {
+interface RenderAppShellOptions {
+    readonly activeTenantName?:
+    string | null;
+    readonly path?: string;
+}
+
+function renderAppShell({
+    activeTenantName =
+    "Marcenaria Galdino",
+    path = "/",
+}: RenderAppShellOptions = {}) {
     return render(
-        <MemoryRouter>
-            <AppShell>
+        <MemoryRouter
+            initialEntries={[
+                path,
+            ]}
+        >
+            <AppShell
+                activeTenantName={
+                    activeTenantName
+                }
+            >
                 <p>
                     Conteúdo da página
                 </p>
@@ -64,13 +82,36 @@ describe("AppShell", () => {
                 screen.getByRole(
                     "main",
                 ),
-            ).toBeInTheDocument();
+            ).toHaveAttribute(
+                "id",
+                "og3-main-content",
+            );
 
             expect(
                 screen.getByText(
                     "Conteúdo da página",
                 ),
             ).toBeInTheDocument();
+        },
+    );
+
+    it(
+        "renders the skip link",
+        () => {
+            renderAppShell();
+
+            expect(
+                screen.getByRole(
+                    "link",
+                    {
+                        name:
+                            "Ir para o conteúdo principal",
+                    },
+                ),
+            ).toHaveAttribute(
+                "href",
+                "#og3-main-content",
+            );
         },
     );
 
@@ -91,15 +132,84 @@ describe("AppShell", () => {
     );
 
     it(
+        "shows tenant and current page context",
+        () => {
+            renderAppShell({
+                path: "/clientes",
+            });
+
+            expect(
+                screen.getByText(
+                    "Marcenaria Galdino",
+                ),
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByText(
+                    "Comercial • Clientes",
+                ),
+            ).toBeInTheDocument();
+        },
+    );
+
+    it(
+        "falls back when tenant is unavailable",
+        () => {
+            renderAppShell({
+                activeTenantName: null,
+            });
+
+            expect(
+                screen.getByText(
+                    "Ambiente principal",
+                ),
+            ).toBeInTheDocument();
+
+            expect(
+                screen.getByText(
+                    "Visão geral • Início",
+                ),
+            ).toBeInTheDocument();
+        },
+    );
+
+    it(
+        "updates the browser title",
+        () => {
+            renderAppShell({
+                path: "/materiais",
+            });
+
+            expect(
+                document.title,
+            ).toBe(
+                "Materiais | OrganizeG3",
+            );
+        },
+    );
+
+    it(
         "shows the platform connection status",
         () => {
             renderAppShell();
 
+            const status =
+                screen.getByRole(
+                    "status",
+                );
+
             expect(
-                screen.getByText(
-                    "Online",
-                ),
-            ).toBeInTheDocument();
+                status,
+            ).toHaveAttribute(
+                "aria-live",
+                "polite",
+            );
+
+            expect(
+                status,
+            ).toHaveTextContent(
+                "Online",
+            );
         },
     );
 

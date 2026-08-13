@@ -13,13 +13,13 @@ PHASE 01 — PLATFORM FOUNDATION             100% ✅
 PHASE 02 — CORE DOMAIN                     100% ✅
 PHASE 03 — APPLICATION & API               100% ✅
 PHASE 04 — WEB / PWA INTEGRATION           100% ✅
-PHASE 05 — UX/UI                            29% 🚧
+PHASE 05 — UX/UI                            43% 🚧
 PHASE 06 — MODULE IMPLEMENTATION             0%
 PHASE 07 — QUALITY & SECURITY                0%
 PHASE 08 — RELEASE ENGINEERING               0%
 PHASE 09 — DISTRIBUTION                      0%
 
-Progresso macro: aproximadamente 48% — quatro fases completas e 29% da Phase 05.
+Progresso macro: aproximadamente 49% — quatro fases completas e 43% da Phase 05.
 
 O percentual macro considera as nove fases principais com o mesmo peso. O progresso interno de cada fase permanece registrado separadamente.
 
@@ -119,13 +119,13 @@ dados autenticados não apresentados como atualizados durante falha de rede.
 5. Phase 05 — UX/UI
 05.1 Auditoria UX/UI e arquitetura         100% ✅
 05.2 Fundação acessível de overlays        100% ✅
-05.3 Navegação e hierarquia                  0% — PRÓXIMO
-05.4 Formulários, estados e feedback         0%
+05.3 Navegação e hierarquia                100% ✅
+05.4 Formulários, estados e feedback         0% — PRÓXIMO
 05.5 Responsividade e experiência móvel      0%
 05.6 Consistência entre módulos              0%
 05.7 Gates finais e documentação             0%
 
-Status da Phase 05: 29% — 2 de 7 blocos concluídos.
+Status da Phase 05: 43% — 3 de 7 blocos concluídos.
 
 A Phase 05 consolida a experiência construída antecipadamente na Phase 04. O design system existente deve ser evoluído somente quando houver necessidade comprovada.
 
@@ -233,6 +233,46 @@ Overlays com tabIndex correto:         19/19
 
 O aviso de chunk JavaScript acima de 500 kB permanece registrado para divisão futura de código e não reprovou o build atual.
 
+
+6.5 Navegação e hierarquia
+
+Foram consolidados:
+
+- catálogo centralizado de navegação;
+- resolução do grupo e da página atual;
+- suporte a subrotas futuras mantendo o módulo pai;
+- agrupamento semântico dos módulos;
+- indicação visual e acessível da rota ativa;
+- contexto da empresa ativa no App Shell;
+- contexto da empresa e da página no menu móvel;
+- título da aba sincronizado com a página;
+- skip link para o conteúdo principal;
+- região principal identificada e focável;
+- conectividade anunciada de forma acessível;
+- relacionamento entre o botão Menu e a região controlada;
+- preservação das permissões na navegação;
+- operação completa por teclado no desktop e no celular;
+- ausência de valores visuais hardcoded no frontend.
+
+6.6 Gates do 05.3
+
+- [x] Auditoria estática com 15 de 15 requisitos aprovados
+- [x] Nenhum valor visual hardcoded encontrado
+- [x] TypeScript aprovado
+- [x] ESLint aprovado
+- [x] 43 arquivos de teste aprovados
+- [x] 244 testes aprovados
+- [x] Build de produção aprovado
+- [x] Manifesto e service worker gerados
+- [x] Validação manual desktop aprovada
+- [x] Validação manual móvel aprovada
+- [x] Navegação por teclado aprovada
+- [x] Skip link aprovado
+- [x] Contexto da empresa e da página aprovado
+- [x] Verificação de whitespace aprovada
+
+O aviso de chunk JavaScript acima de 500 kB permanece registrado para divisão futura de código e não reprovou o build atual.
+
 7. Regras arquiteturais preservadas
 7.1 Design system
 
@@ -295,30 +335,30 @@ dry-run futuro
 
 A próxima etapa de código é:
 
-05.3 — Navegação e hierarquia
+05.4 — Formulários, estados e feedback
 
 O bloco deverá revisar e consolidar:
 
-hierarquia do App Shell;
-contexto da empresa e do ambiente ativo;
-agrupamento dos módulos;
-posição de Clientes e Fornecedores;
-escalabilidade da navegação para a Phase 06;
-navegação desktop e móvel;
-identificação da página atual;
-skip link para o conteúdo principal;
-relacionamento entre acionadores e regiões controladas;
-anúncio acessível do estado de conectividade;
-operação completa por teclado.
+- clareza e consistência dos formulários;
+- indicação de campos obrigatórios;
+- mensagens de validação;
+- estados de envio e ações indisponíveis;
+- feedback de sucesso e erro;
+- confirmações de ações destrutivas;
+- loading, erro e estado vazio;
+- consistência entre criação e edição;
+- prevenção de submissões duplicadas;
+- operação por teclado e leitores de tela.
 9. Próxima sequência operacional
-Registrar e versionar a conclusão do 05.2.
-Excluir referências temporárias de auditoria.
-Auditar a estrutura atual da navegação.
-Definir a arquitetura de informação preparada para a Phase 06.
-Implementar o 05.3 em lotes verificáveis.
-Executar gates automatizados e manuais.
-Atualizar o progresso oficial.
-Prosseguir para o 05.4.
+
+1. Registrar e versionar a conclusão do 05.3.
+2. Excluir referências temporárias da auditoria.
+3. Auditar formulários, estados e feedback.
+4. Definir os lotes verificáveis do 05.4.
+5. Implementar uma fatia por vez.
+6. Executar gates automatizados e manuais.
+7. Atualizar o progresso oficial.
+8. Prosseguir para o 05.5.
 10. Referência histórica da autenticação
 
 Commit de referência da conclusão da integração de autenticação:

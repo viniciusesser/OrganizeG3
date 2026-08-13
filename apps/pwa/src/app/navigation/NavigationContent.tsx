@@ -61,47 +61,60 @@ export function NavigationContent({
     return (
         <>
             {visibleGroups.map(
-                (group) => (
-                    <section
-                        className="og3-navigation__group"
-                        key={group.id}
-                    >
-                        <div className="og3-navigation__group-label">
-                            {group.label}
-                        </div>
+                (group) => {
+                    const groupLabelId =
+                        `og3-navigation-group-${group.id}`;
 
-                        <ul className="og3-navigation__list">
-                            {group.items.map(
-                                (item) => (
-                                    <li
-                                        key={
-                                            item.id
-                                        }
-                                    >
-                                        <NavLink
-                                            className={
-                                                getNavigationLinkClassName
-                                            }
-                                            end={
-                                                item.end
-                                            }
-                                            onClick={
-                                                onNavigate
-                                            }
-                                            to={
-                                                item.path
+                    return (
+                        <section
+                            aria-labelledby={
+                                groupLabelId
+                            }
+                            className="og3-navigation__group"
+                            key={group.id}
+                        >
+                            <div
+                                className="og3-navigation__group-label"
+                                id={groupLabelId}
+                            >
+                                {group.label}
+                            </div>
+
+                            <ul
+                                className="og3-navigation__list"
+                            >
+                                {group.items.map(
+                                    (item) => (
+                                        <li
+                                            key={
+                                                item.id
                                             }
                                         >
-                                            {
-                                                item.label
-                                            }
-                                        </NavLink>
-                                    </li>
-                                ),
-                            )}
-                        </ul>
-                    </section>
-                ),
+                                            <NavLink
+                                                className={
+                                                    getNavigationLinkClassName
+                                                }
+                                                end={
+                                                    item.end
+                                                }
+                                                onClick={
+                                                    onNavigate
+                                                }
+                                                to={
+                                                    item.path
+                                                }
+                                            >
+                                                {
+                                                    item.label
+                                                }
+                                            </NavLink>
+                                        </li>
+                                    ),
+                                )}
+                            </ul>
+                        </section>
+                    );
+                },
             )}
         </>
     );

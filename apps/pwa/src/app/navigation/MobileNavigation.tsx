@@ -7,16 +7,23 @@ import {
 import {
     Button,
     Heading,
+    Text,
 } from "@/shared/components/ui";
 
 export interface MobileNavigationProps {
+    readonly activeTenantName:
+    string;
     readonly isOpen: boolean;
     readonly onClose: () => void;
+    readonly pageContextLabel:
+    string;
 }
 
 export function MobileNavigation({
+    activeTenantName,
     isOpen,
     onClose,
+    pageContextLabel,
 }: MobileNavigationProps) {
     const {
         overlayRef,
@@ -53,9 +60,26 @@ export function MobileNavigation({
                 <header
                     className="og3-mobile-navigation__header"
                 >
-                    <Heading level={4}>
-                        OrganizeG3
-                    </Heading>
+                    <div
+                        className="og3-mobile-navigation__identity"
+                    >
+                        <Heading level={4}>
+                            OrganizeG3
+                        </Heading>
+
+                        <Text
+                            size="sm"
+                        >
+                            {activeTenantName}
+                        </Text>
+
+                        <Text
+                            size="sm"
+                            tone="secondary"
+                        >
+                            {pageContextLabel}
+                        </Text>
+                    </div>
 
                     <Button
                         data-og3-autofocus="true"

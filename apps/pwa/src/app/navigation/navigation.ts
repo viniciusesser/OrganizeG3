@@ -14,6 +14,11 @@ export interface NavigationGroup {
     readonly NavigationItem[];
 }
 
+export interface NavigationContextMatch {
+    readonly group: NavigationGroup;
+    readonly item: NavigationItem;
+}
+
 export const navigationGroups:
     readonly NavigationGroup[] = [
         {
@@ -125,6 +130,117 @@ export const navigationGroups:
             ],
         },
     ];
+
+function normalizePathname(
+    pathname: string,
+): string {
+    const normalized =
+        pathname.trim();
+
+    if (
+        normalized.length === 0 ||
+        normalized === "/"
+    ) {
+        return "/";
+    }
+
+    const withLeadingSlash =
+        normalized.startsWith("/")
+            ? normalized
+            : `/${normalized}`;
+
+    return withLeadingSlash.endsWith("/")
+        ? withLeadingSlash.slice(
+            0,
+            -1,
+        )
+        : withLeadingSlash;
+}
+
+function matchesNavigationItem(
+    item: NavigationItem,
+    pathname: string,
+): boolean {
+    const normalizedPathname =
+        normalizePathname(
+            pathname,
+        );
+
+    const normalizedItemPath =
+        normalizePathname(
+            item.path,
+        );
+
+    if (item.end === true) {
+        return (
+            normalizedPathname ===
+            normalizedItemPath
+        );
+    }
+
+    return (
+        normalizedPathname ===
+        normalizedItemPath ||
+        normalizedPathname.startsWith(
+            `${normalizedItemPath}/`,
+        )
+    );
+}
+
+export function findNavigationContext(
+    pathname: string,
+    groups:
+        readonly NavigationGroup[] =
+        navigationGroups,
+): NavigationContextMatch | null {
+    for (const group of groups) {
+        const item =
+            group.items.find(
+                (candidate) =>
+                    matchesNavigationItem(
+                        candidate,
+                        pathname,
+                    ),
+            );
+
+        if (item !== undefined) {
+            return {
+                group,
+                item,
+            };
+        }
+    }
+
+    return null;
+}
+
+export function getNavigationContextLabel(
+    context:
+        NavigationContextMatch | null,
+): string {
+    if (context === null) {
+        return "OrganizeG3";
+    }
+
+    return (
+        `${context.group.label} • ` +
+        context.item.label
+    );
+}
+
+export function getNavigationDocumentTitle(
+    context:
+        NavigationContextMatch | null,
+): string {
+    if (context === null) {
+        return "OrganizeG3";
+    }
+
+    return (
+        `${context.item.label} | ` +
+        "OrganizeG3"
+    );
+}
 
 export function hasNavigationAccess(
     item: NavigationItem,
