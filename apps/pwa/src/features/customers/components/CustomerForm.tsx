@@ -16,6 +16,9 @@ import {
     Select,
 } from "@/shared/components/patterns";
 import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
+import {
     Button,
     Heading,
     Input,
@@ -40,7 +43,8 @@ interface CustomerFormErrors {
 function optionalValue(
     value: string,
 ): string | null {
-    const normalized = value.trim();
+    const normalized =
+        value.trim();
 
     return normalized.length > 0
         ? normalized
@@ -56,7 +60,9 @@ function validateForm(
         email?: string;
     } = {};
 
-    if (name.trim().length === 0) {
+    if (
+        name.trim().length === 0
+    ) {
         errors.name =
             "Informe o nome do cliente.";
     }
@@ -84,42 +90,69 @@ export function CustomerForm({
     onCancel,
     onSubmit,
 }: CustomerFormProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    const [name, setName] =
-        useState(
-            customer?.name ?? "",
-        );
+    const descriptionId =
+        useId();
 
-    const [customerType, setCustomerType] =
-        useState<CustomerType>(
-            customer?.customer_type ??
-            "INDIVIDUAL",
-        );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose: onCancel,
+    });
 
-    const [documentNumber, setDocumentNumber] =
-        useState(
-            customer?.document_number ?? "",
-        );
+    const [
+        name,
+        setName,
+    ] = useState(
+        customer?.name ?? "",
+    );
 
-    const [email, setEmail] =
-        useState(
-            customer?.email ?? "",
-        );
+    const [
+        customerType,
+        setCustomerType,
+    ] = useState<CustomerType>(
+        customer?.customer_type ??
+        "INDIVIDUAL",
+    );
 
-    const [phone, setPhone] =
-        useState(
-            customer?.phone ?? "",
-        );
+    const [
+        documentNumber,
+        setDocumentNumber,
+    ] = useState(
+        customer?.document_number ?? "",
+    );
 
-    const [errors, setErrors] =
-        useState<CustomerFormErrors>({});
+    const [
+        email,
+        setEmail,
+    ] = useState(
+        customer?.email ?? "",
+    );
+
+    const [
+        phone,
+        setPhone,
+    ] = useState(
+        customer?.phone ?? "",
+    );
+
+    const [
+        errors,
+        setErrors,
+    ] = useState<CustomerFormErrors>(
+        {},
+    );
 
     const isEditing =
         customer !== undefined;
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
@@ -129,36 +162,57 @@ export function CustomerForm({
                 email,
             );
 
-        setErrors(nextErrors);
+        setErrors(
+            nextErrors,
+        );
 
         if (
-            nextErrors.name !== undefined ||
-            nextErrors.email !== undefined
+            nextErrors.name !==
+            undefined ||
+            nextErrors.email !==
+            undefined
         ) {
             return;
         }
 
         await onSubmit({
             name: name.trim(),
-            customer_type: customerType,
+            customer_type:
+                customerType,
             document_number:
                 optionalValue(
                     documentNumber,
                 ),
-            email: optionalValue(email),
-            phone: optionalValue(phone),
+            email:
+                optionalValue(
+                    email,
+                ),
+            phone:
+                optionalValue(
+                    phone,
+                ),
         });
     };
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
             <div
-                className="og3-dialog og3-dialog--md"
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
             >
                 <header
                     className="og3-dialog__header"
@@ -170,24 +224,38 @@ export function CustomerForm({
                             className="og3-dialog__title"
                             level={3}
                         >
-                            <span id={titleId}>
-                                {isEditing
-                                    ? "Editar cliente"
-                                    : "Novo cliente"}
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar cliente"
+                                        : "Novo cliente"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
                             Preencha os dados principais do cadastro.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
-                        type="button"
                         variant="secondary"
                     >
                         Fechar
@@ -196,8 +264,12 @@ export function CustomerForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
-                        void handleSubmit(event);
+                    onSubmit={(
+                        event,
+                    ) => {
+                        void handleSubmit(
+                            event,
+                        );
                     }}
                 >
                     <div
@@ -208,113 +280,181 @@ export function CustomerForm({
                         >
                             <Input
                                 autoComplete="name"
-                                autoFocus
-                                disabled={isSubmitting}
-                                error={errors.name}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.name
+                                }
                                 label="Nome do cliente *"
-                                maxLength={200}
-                                onChange={(event) => {
+                                maxLength={
+                                    200
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     setName(
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={name}
+                                value={
+                                    name
+                                }
                             />
 
                             <Select
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Tipo de pessoa *"
-                                onChange={(event) => {
+                                onChange={(
+                                    event,
+                                ) => {
                                     setCustomerType(
-                                        event.target.value as CustomerType,
+                                        event
+                                            .target
+                                            .value as CustomerType,
                                     );
                                 }}
-                                value={customerType}
+                                value={
+                                    customerType
+                                }
                             >
-                                <option value="INDIVIDUAL">
+                                <option
+                                    value="INDIVIDUAL"
+                                >
                                     Pessoa Física
                                 </option>
 
-                                <option value="CORPORATE">
+                                <option
+                                    value="CORPORATE"
+                                >
                                     Pessoa Jurídica
                                 </option>
                             </Select>
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label={
                                     customerType ===
                                         "INDIVIDUAL"
                                         ? "CPF"
                                         : "CNPJ"
                                 }
-                                maxLength={18}
-                                onChange={(event) => {
+                                maxLength={
+                                    18
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     setDocumentNumber(
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={documentNumber}
+                                value={
+                                    documentNumber
+                                }
                             />
 
                             <Input
                                 autoComplete="tel"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Telefone"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     setPhone(
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="tel"
-                                value={phone}
+                                value={
+                                    phone
+                                }
                             />
 
                             <Input
                                 autoComplete="email"
-                                disabled={isSubmitting}
-                                error={errors.email}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.email
+                                }
                                 label="Email"
-                                maxLength={320}
-                                onChange={(event) => {
+                                maxLength={
+                                    320
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     setEmail(
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="email"
-                                value={email}
+                                value={
+                                    email
+                                }
                             />
                         </div>
 
-                        {submitError !== null && (
-                            <InlineMessage tone="danger">
-                                {submitError}
-                            </InlineMessage>
-                        )}
+                        {submitError !==
+                            null && (
+                                <InlineMessage
+                                    tone="danger"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </InlineMessage>
+                            )}
                     </div>
 
                     <footer
                         className="og3-dialog__footer"
                     >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
-                            type="button"
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Salvar cliente"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Salvar cliente"
+                            }
                         </Button>
                     </footer>
                 </form>

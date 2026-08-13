@@ -2,6 +2,9 @@ import {
     NavigationContent,
 } from "@/app/navigation/NavigationContent";
 import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
+import {
     Button,
     Heading,
 } from "@/shared/components/ui";
@@ -15,6 +18,13 @@ export function MobileNavigation({
     isOpen,
     onClose,
 }: MobileNavigationProps) {
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLElement>({
+        isActive: isOpen,
+        onClose,
+    });
+
     if (!isOpen) {
         return null;
     }
@@ -35,7 +45,10 @@ export function MobileNavigation({
                 aria-label="Navegação móvel"
                 aria-modal="true"
                 className="og3-mobile-navigation__drawer"
+                id="og3-mobile-navigation"
+                ref={overlayRef}
                 role="dialog"
+                tabIndex={-1}
             >
                 <header
                     className="og3-mobile-navigation__header"
@@ -45,6 +58,7 @@ export function MobileNavigation({
                     </Heading>
 
                     <Button
+                        data-og3-autofocus="true"
                         onClick={onClose}
                         size="sm"
                         variant="secondary"

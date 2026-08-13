@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useId,
 } from "react";
 
@@ -12,6 +11,9 @@ import {
 import type {
     Material,
 } from "@/features/materials/model/material";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -42,15 +44,21 @@ function formatBrand(
     material: Material,
     brand?: Brand,
 ): string {
-    if (material.brand_id === null) {
+    if (
+        material.brand_id === null
+    ) {
         return "Sem marca";
     }
 
-    if (brand === undefined) {
+    if (
+        brand === undefined
+    ) {
         return "Marca indisponível";
     }
 
-    return formatBrandOption(brand);
+    return formatBrandOption(
+        brand,
+    );
 }
 
 export function MaterialDetails({
@@ -65,43 +73,40 @@ export function MaterialDetails({
     onDeactivate,
     onReactivate,
 }: MaterialDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ) => {
-                if (event.key === "Escape") {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [onClose],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
                         <Badge
                             variant={
                                 material.is_active
@@ -109,25 +114,45 @@ export function MaterialDetails({
                                     : "neutral"
                             }
                         >
-                            {material.is_active
-                                ? "Ativo"
-                                : "Inativo"}
+                            {
+                                material.is_active
+                                    ? "Ativo"
+                                    : "Inativo"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {material.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    material.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {material.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                material.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -135,73 +160,126 @@ export function MaterialDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Código</dt>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Código
+                            </dt>
+
                             <dd>
-                                {material.code}
+                                {
+                                    material.code
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Nome</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Nome
+                            </dt>
+
                             <dd>
-                                {material.name}
+                                {
+                                    material.name
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Categoria</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Categoria
+                            </dt>
+
                             <dd>
-                                {material.category}
+                                {
+                                    material.category
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Unidade</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Unidade
+                            </dt>
+
                             <dd>
-                                {material.unit}
+                                {
+                                    material.unit
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Marca</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Marca
+                            </dt>
+
                             <dd>
-                                {formatBrand(
-                                    material,
-                                    brand,
-                                )}
+                                {
+                                    formatBrand(
+                                        material,
+                                        brand,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        {brand !== undefined && (
-                            <div className="og3-details-grid__item">
-                                <dt>Status da marca</dt>
-                                <dd>
-                                    <Badge
-                                        variant={
-                                            brand.is_active
-                                                ? "success"
-                                                : "neutral"
-                                        }
-                                    >
-                                        {brand.is_active
-                                            ? "Ativa"
-                                            : "Inativa"}
-                                    </Badge>
-                                </dd>
-                            </div>
-                        )}
+                        {brand !==
+                            undefined && (
+                                <div
+                                    className="og3-details-grid__item"
+                                >
+                                    <dt>
+                                        Status da marca
+                                    </dt>
+
+                                    <dd>
+                                        <Badge
+                                            variant={
+                                                brand.is_active
+                                                    ? "success"
+                                                    : "neutral"
+                                            }
+                                        >
+                                            {
+                                                brand.is_active
+                                                    ? "Ativa"
+                                                    : "Inativa"
+                                            }
+                                        </Badge>
+                                    </dd>
+                                </div>
+                            )}
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(material);
+                                onEdit(
+                                    material,
+                                );
                             }}
                             variant="secondary"
                         >
@@ -212,7 +290,9 @@ export function MaterialDetails({
                     {material.is_active &&
                         canDeactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onDeactivate(
                                         material,
@@ -227,7 +307,9 @@ export function MaterialDetails({
                     {!material.is_active &&
                         canReactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onReactivate(
                                         material,

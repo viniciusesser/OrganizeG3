@@ -1,10 +1,13 @@
 import {
-    useEffect,
+    useId,
 } from "react";
 import type {
     ReactNode,
 } from "react";
 
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Button,
     Heading,
@@ -40,86 +43,115 @@ export function ConfirmationDialog({
     title,
     titleId,
 }: ConfirmationDialogProps) {
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ) => {
-                if (
-                    event.key === "Escape" &&
-                    !isSubmitting
-                ) {
-                    onCancel();
-                }
-            };
+    const descriptionId =
+        useId();
 
-            document.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                document.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [
-            isSubmitting,
-            onCancel,
-        ],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose: onCancel,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="alertdialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--sm">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id={titleId}>
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--sm",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
                                 {title}
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {description}
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
+                            {
+                                description
+                            }
                         </Text>
                     </div>
                 </header>
 
-                {errorMessage !== null && (
-                    <div className="og3-dialog__body">
-                        <InlineMessage tone="danger">
-                            {errorMessage}
-                        </InlineMessage>
-                    </div>
-                )}
+                {errorMessage !==
+                    null && (
+                        <div
+                            className="og3-dialog__body"
+                        >
+                            <InlineMessage
+                                tone="danger"
+                            >
+                                {
+                                    errorMessage
+                                }
+                            </InlineMessage>
+                        </div>
+                    )}
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     <Button
-                        disabled={isSubmitting}
-                        onClick={onCancel}
-                        type="button"
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         variant="secondary"
                     >
-                        {cancelLabel}
+                        {
+                            cancelLabel
+                        }
                     </Button>
 
                     <Button
-                        disabled={isSubmitting}
-                        onClick={onConfirm}
-                        type="button"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onConfirm
+                        }
                         variant="danger"
                     >
-                        {isSubmitting
-                            ? pendingLabel
-                            : confirmLabel}
+                        {
+                            isSubmitting
+                                ? pendingLabel
+                                : confirmLabel
+                        }
                     </Button>
                 </footer>
             </div>

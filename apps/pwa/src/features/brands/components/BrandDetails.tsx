@@ -1,11 +1,13 @@
 import {
-    useEffect,
     useId,
 } from "react";
 
 import type {
     Brand,
 } from "@/features/brands/model/brand";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -42,43 +44,40 @@ export function BrandDetails({
     onDeactivate,
     onReactivate,
 }: BrandDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ): void => {
-                if (event.key === "Escape") {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [onClose],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
                         <Badge
                             variant={
                                 brand.is_active
@@ -86,25 +85,45 @@ export function BrandDetails({
                                     : "neutral"
                             }
                         >
-                            {brand.is_active
-                                ? "Ativa"
-                                : "Inativa"}
+                            {
+                                brand.is_active
+                                    ? "Ativa"
+                                    : "Inativa"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {brand.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    brand.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {brand.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                brand.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -112,35 +131,70 @@ export function BrandDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Código</dt>
-                            <dd>{brand.code}</dd>
-                        </div>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Código
+                            </dt>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Nome</dt>
-                            <dd>{brand.name}</dd>
-                        </div>
-
-                        <div className="og3-details-grid__item">
-                            <dt>Status</dt>
                             <dd>
-                                {brand.is_active
-                                    ? "Ativa"
-                                    : "Inativa"}
+                                {
+                                    brand.code
+                                }
+                            </dd>
+                        </div>
+
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Nome
+                            </dt>
+
+                            <dd>
+                                {
+                                    brand.name
+                                }
+                            </dd>
+                        </div>
+
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Status
+                            </dt>
+
+                            <dd>
+                                {
+                                    brand.is_active
+                                        ? "Ativa"
+                                        : "Inativa"
+                                }
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(brand);
+                                onEdit(
+                                    brand,
+                                );
                             }}
                             variant="secondary"
                         >

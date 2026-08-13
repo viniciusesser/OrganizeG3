@@ -10,6 +10,9 @@
     min-width: 0;
     min-height: 100vh;
     min-height: 100dvh;
+
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 .og3-mobile-navigation__backdrop {
@@ -38,6 +41,7 @@
             var(--og3-mobile-drawer-max-width));
 
     max-width: 100%;
+    min-height: 0;
     height: 100vh;
     height: 100dvh;
 
@@ -54,13 +58,15 @@
         var(--og3-shadow-lg);
 
     overflow: hidden;
+    overscroll-behavior: contain;
 }
 
 .og3-mobile-navigation__header {
     min-height:
         var(--og3-header-height);
 
-    flex: 0 0 var(--og3-header-height);
+    flex:
+        0 0 var(--og3-header-height);
 
     display: flex;
     align-items: center;
@@ -77,7 +83,10 @@
 
 .og3-mobile-navigation__content {
     min-height: 0;
-    flex: 1;
+    max-height: 100%;
+    flex: 1 1 auto;
+
+    align-content: start;
 
     padding:
         var(--og3-space-4);
@@ -86,6 +95,8 @@
     overflow-y: auto;
 
     overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    touch-action: pan-y;
 }
 
 @media (max-width: 48rem) {

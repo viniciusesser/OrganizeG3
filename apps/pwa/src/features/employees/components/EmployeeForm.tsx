@@ -1,10 +1,18 @@
-import { useId, useState } from "react";
-import type { FormEvent } from "react";
+import {
+    useId,
+    useState,
+} from "react";
+import type {
+    FormEvent,
+} from "react";
 
 import type {
     Employee,
     EmployeeCreateInput,
 } from "@/features/employees/model/employee";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Button,
     Heading,
@@ -46,25 +54,41 @@ function createDraft(
     employee?: Employee,
 ): EmployeeFormDraft {
     return {
-        code: employee?.code ?? "",
-        fullName: employee?.full_name ?? "",
+        code:
+            employee?.code ??
+            "",
+        fullName:
+            employee?.full_name ??
+            "",
         documentNumber:
-            employee?.document_number ?? "",
-        email: employee?.email ?? "",
-        phone: employee?.phone ?? "",
-        jobTitle: employee?.job_title ?? "",
+            employee?.document_number ??
+            "",
+        email:
+            employee?.email ??
+            "",
+        phone:
+            employee?.phone ??
+            "",
+        jobTitle:
+            employee?.job_title ??
+            "",
         contractType:
-            employee?.contract_type ?? "",
-        birthDate: employee?.birth_date ?? "",
+            employee?.contract_type ??
+            "",
+        birthDate:
+            employee?.birth_date ??
+            "",
         admissionDate:
-            employee?.admission_date ?? "",
+            employee?.admission_date ??
+            "",
     };
 }
 
 function optionalValue(
     value: string,
 ): string | null {
-    const normalized = value.trim();
+    const normalized =
+        value.trim();
 
     return normalized.length > 0
         ? normalized
@@ -74,11 +98,15 @@ function optionalValue(
 function isValidDateValue(
     value: string,
 ): boolean {
-    if (value.length === 0) {
+    if (
+        value.length === 0
+    ) {
         return true;
     }
 
-    return /^\d{4}-\d{2}-\d{2}$/.test(value);
+    return /^\d{4}-\d{2}-\d{2}$/.test(
+        value,
+    );
 }
 
 function validateForm(
@@ -92,41 +120,63 @@ function validateForm(
         admissionDate?: string;
     } = {};
 
-    if (draft.code.trim().length === 0) {
+    if (
+        draft.code
+            .trim()
+            .length === 0
+    ) {
         errors.code =
             "Informe o código do funcionário.";
     }
 
-    if (draft.fullName.trim().length === 0) {
+    if (
+        draft.fullName
+            .trim()
+            .length === 0
+    ) {
         errors.fullName =
             "Informe o nome completo do funcionário.";
     }
 
-    const normalizedEmail = draft.email.trim();
+    const normalizedEmail =
+        draft.email.trim();
 
     if (
-        normalizedEmail.length > 0 &&
+        normalizedEmail.length >
+        0 &&
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             normalizedEmail,
         )
     ) {
-        errors.email = "Informe um email válido.";
+        errors.email =
+            "Informe um email válido.";
     }
 
-    if (!isValidDateValue(draft.birthDate)) {
+    if (
+        !isValidDateValue(
+            draft.birthDate,
+        )
+    ) {
         errors.birthDate =
             "Informe uma data de nascimento válida.";
     }
 
-    if (!isValidDateValue(draft.admissionDate)) {
+    if (
+        !isValidDateValue(
+            draft.admissionDate,
+        )
+    ) {
         errors.admissionDate =
             "Informe uma data de admissão válida.";
     }
 
     if (
-        draft.birthDate.length > 0 &&
-        draft.admissionDate.length > 0 &&
-        draft.admissionDate < draft.birthDate
+        draft.birthDate.length >
+        0 &&
+        draft.admissionDate.length >
+        0 &&
+        draft.admissionDate <
+        draft.birthDate
     ) {
         errors.admissionDate =
             "A admissão não pode ser anterior ao nascimento.";
@@ -142,86 +192,176 @@ export function EmployeeForm({
     onCancel,
     onSubmit,
 }: EmployeeFormProps) {
-    const titleId = useId();
-    const [draft, setDraft] =
-        useState<EmployeeFormDraft>(
-            createDraft(employee),
-        );
-    const [errors, setErrors] =
-        useState<EmployeeFormErrors>({});
-    const isEditing = employee !== undefined;
+    const titleId =
+        useId();
+
+    const descriptionId =
+        useId();
+
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose:
+            onCancel,
+    });
+
+    const [
+        draft,
+        setDraft,
+    ] = useState<EmployeeFormDraft>(
+        createDraft(
+            employee,
+        ),
+    );
+
+    const [
+        errors,
+        setErrors,
+    ] = useState<EmployeeFormErrors>(
+        {},
+    );
+
+    const isEditing =
+        employee !== undefined;
 
     const updateField = (
-        field: keyof EmployeeFormDraft,
+        field:
+            keyof EmployeeFormDraft,
         value: string,
-    ) => {
-        setDraft((current) => ({
-            ...current,
-            [field]: value,
-        }));
+    ): void => {
+        setDraft(
+            (current) => ({
+                ...current,
+                [field]:
+                    value,
+            }),
+        );
     };
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
-        const nextErrors = validateForm(draft);
-        setErrors(nextErrors);
+        const nextErrors =
+            validateForm(
+                draft,
+            );
 
-        if (Object.keys(nextErrors).length > 0) {
+        setErrors(
+            nextErrors,
+        );
+
+        if (
+            Object.keys(
+                nextErrors,
+            ).length > 0
+        ) {
             return;
         }
 
         await onSubmit({
-            code: draft.code.trim().toUpperCase(),
-            full_name: draft.fullName.trim(),
-            document_number: optionalValue(
-                draft.documentNumber,
-            ),
-            email: optionalValue(draft.email),
-            phone: optionalValue(draft.phone),
-            job_title: optionalValue(draft.jobTitle),
-            contract_type: optionalValue(
-                draft.contractType,
-            ),
-            birth_date: optionalValue(
-                draft.birthDate,
-            ),
-            admission_date: optionalValue(
-                draft.admissionDate,
-            ),
+            code:
+                draft.code
+                    .trim()
+                    .toUpperCase(),
+            full_name:
+                draft.fullName
+                    .trim(),
+            document_number:
+                optionalValue(
+                    draft.documentNumber,
+                ),
+            email:
+                optionalValue(
+                    draft.email,
+                ),
+            phone:
+                optionalValue(
+                    draft.phone,
+                ),
+            job_title:
+                optionalValue(
+                    draft.jobTitle,
+                ),
+            contract_type:
+                optionalValue(
+                    draft.contractType,
+                ),
+            birth_date:
+                optionalValue(
+                    draft.birthDate,
+                ),
+            admission_date:
+                optionalValue(
+                    draft.admissionDate,
+                ),
         });
     };
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {isEditing
-                                    ? "Editar funcionário"
-                                    : "Novo funcionário"}
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar funcionário"
+                                        : "Novo funcionário"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            Preencha a identificação, o contato e os dados
-                            profissionais do funcionário.
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
+                            Preencha a identificação, o contato e os dados profissionais do funcionário.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -231,170 +371,292 @@ export function EmployeeForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
-                        void handleSubmit(event);
+                    onSubmit={(
+                        event,
+                    ) => {
+                        void handleSubmit(
+                            event,
+                        );
                     }}
                 >
-                    <div className="og3-dialog__body">
-                        <div className="og3-form-grid">
+                    <div
+                        className="og3-dialog__body"
+                    >
+                        <div
+                            className="og3-form-grid"
+                        >
                             <Input
-                                autoFocus
-                                disabled={isSubmitting}
-                                error={errors.code}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.code
+                                }
                                 label="Código do funcionário *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "code",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.code}
+                                value={
+                                    draft.code
+                                }
                             />
 
                             <Input
                                 autoComplete="name"
-                                disabled={isSubmitting}
-                                error={errors.fullName}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.fullName
+                                }
                                 label="Nome completo *"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "fullName",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.fullName}
+                                value={
+                                    draft.fullName
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="CPF ou documento"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "documentNumber",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.documentNumber}
+                                value={
+                                    draft.documentNumber
+                                }
                             />
 
                             <Input
                                 autoComplete="email"
-                                disabled={isSubmitting}
-                                error={errors.email}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.email
+                                }
                                 label="Email"
-                                maxLength={320}
-                                onChange={(event) => {
+                                maxLength={
+                                    320
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "email",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="email"
-                                value={draft.email}
+                                value={
+                                    draft.email
+                                }
                             />
 
                             <Input
                                 autoComplete="tel"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Telefone"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "phone",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="tel"
-                                value={draft.phone}
+                                value={
+                                    draft.phone
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Cargo ou função"
-                                maxLength={120}
-                                onChange={(event) => {
+                                maxLength={
+                                    120
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "jobTitle",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.jobTitle}
+                                value={
+                                    draft.jobTitle
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Tipo de contrato"
-                                maxLength={60}
-                                onChange={(event) => {
+                                maxLength={
+                                    60
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "contractType",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 supportText="Exemplos: CLT, PJ, temporário ou aprendiz."
-                                value={draft.contractType}
+                                value={
+                                    draft.contractType
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.birthDate}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.birthDate
+                                }
                                 label="Data de nascimento"
-                                onChange={(event) => {
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "birthDate",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="date"
-                                value={draft.birthDate}
+                                value={
+                                    draft.birthDate
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.admissionDate}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.admissionDate
+                                }
                                 label="Data de admissão"
-                                onChange={(event) => {
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "admissionDate",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="date"
-                                value={draft.admissionDate}
+                                value={
+                                    draft.admissionDate
+                                }
                             />
                         </div>
 
-                        {submitError !== null && (
-                            <div
-                                className="og3-inline-message og3-inline-message--danger"
-                                role="alert"
-                            >
-                                {submitError}
-                            </div>
-                        )}
+                        {submitError !==
+                            null && (
+                                <div
+                                    className={[
+                                        "og3-inline-message",
+                                        "og3-inline-message--danger",
+                                    ].join(
+                                        " ",
+                                    )}
+                                    role="alert"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </div>
+                            )}
                     </div>
 
-                    <footer className="og3-dialog__footer">
+                    <footer
+                        className="og3-dialog__footer"
+                    >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Salvar funcionário"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Salvar funcionário"
+                            }
                         </Button>
                     </footer>
                 </form>

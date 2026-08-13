@@ -17,6 +17,9 @@ import type {
     MaterialCreateInput,
 } from "@/features/materials/model/material";
 import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
+import {
     Button,
     Heading,
     Input,
@@ -55,13 +58,21 @@ function createDraft(
     material?: Material,
 ): MaterialFormDraft {
     return {
-        code: material?.code ?? "",
-        name: material?.name ?? "",
+        code:
+            material?.code ??
+            "",
+        name:
+            material?.name ??
+            "",
         category:
-            material?.category ?? "",
-        unit: material?.unit ?? "",
+            material?.category ??
+            "",
+        unit:
+            material?.unit ??
+            "",
         brandId:
-            material?.brand_id ?? "",
+            material?.brand_id ??
+            "",
     };
 }
 
@@ -75,24 +86,38 @@ function validateForm(
         unit?: string;
     } = {};
 
-    if (draft.code.trim().length === 0) {
+    if (
+        draft.code
+            .trim()
+            .length === 0
+    ) {
         errors.code =
             "Informe o código do material.";
     }
 
-    if (draft.name.trim().length === 0) {
+    if (
+        draft.name
+            .trim()
+            .length === 0
+    ) {
         errors.name =
             "Informe o nome do material.";
     }
 
     if (
-        draft.category.trim().length === 0
+        draft.category
+            .trim()
+            .length === 0
     ) {
         errors.category =
             "Informe a categoria do material.";
     }
 
-    if (draft.unit.trim().length === 0) {
+    if (
+        draft.unit
+            .trim()
+            .length === 0
+    ) {
         errors.unit =
             "Informe a unidade do material.";
     }
@@ -110,54 +135,88 @@ export function MaterialForm({
     onCancel,
     onSubmit,
 }: MaterialFormProps) {
-    const titleId = useId();
-    const brandFieldId = useId();
+    const titleId =
+        useId();
+
+    const descriptionId =
+        useId();
+
+    const brandFieldId =
+        useId();
+
     const brandSupportId =
         `${brandFieldId}-support`;
 
-    const [draft, setDraft] =
-        useState<MaterialFormDraft>(
-            createDraft(material),
-        );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose:
+            onCancel,
+    });
 
-    const [errors, setErrors] =
-        useState<MaterialFormErrors>({});
+    const [
+        draft,
+        setDraft,
+    ] = useState<MaterialFormDraft>(
+        createDraft(
+            material,
+        ),
+    );
+
+    const [
+        errors,
+        setErrors,
+    ] = useState<MaterialFormErrors>(
+        {},
+    );
 
     const isEditing =
         material !== undefined;
 
     const selectedBrandExists =
-        draft.brandId.length === 0 ||
+        draft.brandId.length ===
+        0 ||
         brands.some(
             (brand) =>
-                brand.id === draft.brandId,
+                brand.id ===
+                draft.brandId,
         );
 
     const updateField = (
-        field: keyof MaterialFormDraft,
+        field:
+            keyof MaterialFormDraft,
         value: string,
-    ) => {
+    ): void => {
         setDraft(
             (current) => ({
                 ...current,
-                [field]: value,
+                [field]:
+                    value,
             }),
         );
     };
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
         const nextErrors =
-            validateForm(draft);
+            validateForm(
+                draft,
+            );
 
-        setErrors(nextErrors);
+        setErrors(
+            nextErrors,
+        );
 
         if (
-            Object.keys(nextErrors)
-                .length > 0
+            Object.keys(
+                nextErrors,
+            ).length > 0
         ) {
             return;
         }
@@ -167,15 +226,19 @@ export function MaterialForm({
                 draft.code
                     .trim()
                     .toUpperCase(),
-            name: draft.name.trim(),
+            name:
+                draft.name
+                    .trim(),
             category:
-                draft.category.trim(),
+                draft.category
+                    .trim(),
             unit:
                 draft.unit
                     .trim()
                     .toUpperCase(),
             brand_id:
-                draft.brandId.length > 0
+                draft.brandId.length >
+                    0
                     ? draft.brandId
                     : null,
         });
@@ -190,33 +253,64 @@ export function MaterialForm({
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {isEditing
-                                    ? "Editar material"
-                                    : "Novo material"}
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar material"
+                                        : "Novo material"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            Preencha a identificação, a
-                            categoria, a unidade e a marca
-                            do material.
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
+                            Preencha a identificação, a categoria, a unidade e a marca do material.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -226,74 +320,134 @@ export function MaterialForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
-                        void handleSubmit(event);
+                    onSubmit={(
+                        event,
+                    ) => {
+                        void handleSubmit(
+                            event,
+                        );
                     }}
                 >
-                    <div className="og3-dialog__body">
-                        <div className="og3-form-grid">
+                    <div
+                        className="og3-dialog__body"
+                    >
+                        <div
+                            className="og3-form-grid"
+                        >
                             <Input
-                                autoFocus
-                                disabled={isSubmitting}
-                                error={errors.code}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.code
+                                }
                                 label="Código do material *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "code",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.code}
+                                value={
+                                    draft.code
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.name}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.name
+                                }
                                 label="Nome do material *"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "name",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.name}
+                                value={
+                                    draft.name
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.category}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.category
+                                }
                                 label="Categoria *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "category",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.category}
+                                value={
+                                    draft.category
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.unit}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.unit
+                                }
                                 label="Unidade *"
-                                maxLength={50}
-                                onChange={(event) => {
+                                maxLength={
+                                    50
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "unit",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 supportText="Exemplos: UN, M², M, KG ou CHAPA."
-                                value={draft.unit}
+                                value={
+                                    draft.unit
+                                }
                             />
 
-                            <div className="og3-field">
+                            <div
+                                className="og3-field"
+                            >
                                 <label
                                     className="og3-field__label"
-                                    htmlFor={brandFieldId}
+                                    htmlFor={
+                                        brandFieldId
+                                    }
                                 >
                                     Marca
                                 </label>
@@ -308,16 +462,26 @@ export function MaterialForm({
                                         !canReadBrands ||
                                         isLoadingBrands
                                     }
-                                    id={brandFieldId}
-                                    onChange={(event) => {
+                                    id={
+                                        brandFieldId
+                                    }
+                                    onChange={(
+                                        event,
+                                    ) => {
                                         updateField(
                                             "brandId",
-                                            event.target.value,
+                                            event
+                                                .target
+                                                .value,
                                         );
                                     }}
-                                    value={draft.brandId}
+                                    value={
+                                        draft.brandId
+                                    }
                                 >
-                                    <option value="">
+                                    <option
+                                        value=""
+                                    >
                                         Sem marca
                                     </option>
 
@@ -332,21 +496,31 @@ export function MaterialForm({
                                     )}
 
                                     {brands.map(
-                                        (brand) => (
+                                        (
+                                            brand,
+                                        ) => (
                                             <option
                                                 disabled={
                                                     !brand.is_active &&
                                                     brand.id !==
                                                     draft.brandId
                                                 }
-                                                key={brand.id}
-                                                value={brand.id}
+                                                key={
+                                                    brand.id
+                                                }
+                                                value={
+                                                    brand.id
+                                                }
                                             >
-                                                {formatBrandOption(
-                                                    brand,
-                                                )}
-                                                {!brand.is_active &&
-                                                    " — Inativa"}
+                                                {
+                                                    formatBrandOption(
+                                                        brand,
+                                                    )
+                                                }
+                                                {
+                                                    !brand.is_active &&
+                                                    " — Inativa"
+                                                }
                                             </option>
                                         ),
                                     )}
@@ -354,41 +528,63 @@ export function MaterialForm({
 
                                 <span
                                     className="og3-field__support"
-                                    id={brandSupportId}
+                                    id={
+                                        brandSupportId
+                                    }
                                 >
-                                    {brandSupportText}
+                                    {
+                                        brandSupportText
+                                    }
                                 </span>
                             </div>
                         </div>
 
-                        {submitError !== null && (
-                            <div
-                                className="og3-inline-message og3-inline-message--danger"
-                                role="alert"
-                            >
-                                {submitError}
-                            </div>
-                        )}
+                        {submitError !==
+                            null && (
+                                <div
+                                    className={[
+                                        "og3-inline-message",
+                                        "og3-inline-message--danger",
+                                    ].join(
+                                        " ",
+                                    )}
+                                    role="alert"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </div>
+                            )}
                     </div>
 
-                    <footer className="og3-dialog__footer">
+                    <footer
+                        className="og3-dialog__footer"
+                    >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Salvar material"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Salvar material"
+                            }
                         </Button>
                     </footer>
                 </form>

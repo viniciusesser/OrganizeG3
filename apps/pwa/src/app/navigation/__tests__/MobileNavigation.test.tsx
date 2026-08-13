@@ -2,6 +2,7 @@ import {
     fireEvent,
     render,
     screen,
+    within,
 } from "@testing-library/react";
 import {
     MemoryRouter,
@@ -24,7 +25,7 @@ function renderMobileNavigation({
     readonly isOpen?: boolean;
     readonly onClose?: () => void;
 } = {}) {
-    render(
+    const view = render(
         <MemoryRouter>
             <MobileNavigation
                 isOpen={isOpen}
@@ -34,146 +35,272 @@ function renderMobileNavigation({
     );
 
     return {
+        ...view,
         onClose,
     };
 }
 
-describe("MobileNavigation", () => {
-    it(
-        "does not render when closed",
-        () => {
-            renderMobileNavigation({
-                isOpen: false,
-            });
+describe(
+    "MobileNavigation",
+    () => {
+        it(
+            "does not render when closed",
+            () => {
+                renderMobileNavigation({
+                    isOpen: false,
+                });
 
-            expect(
-                screen.queryByRole(
-                    "dialog",
+                expect(
+                    screen.queryByRole(
+                        "dialog",
+                        {
+                            name:
+                                "Navegação móvel",
+                        },
+                    ),
+                ).not.toBeInTheDocument();
+            },
+        );
+
+        it(
+            "renders a modal navigation drawer when open",
+            () => {
+                renderMobileNavigation();
+
+                const dialog =
+                    screen.getByRole(
+                        "dialog",
+                        {
+                            name:
+                                "Navegação móvel",
+                        },
+                    );
+
+                expect(
+                    dialog,
+                ).toBeInTheDocument();
+
+                expect(
+                    dialog,
+                ).toHaveAttribute(
+                    "aria-modal",
+                    "true",
+                );
+
+                expect(
+                    dialog,
+                ).toHaveAttribute(
+                    "id",
+                    "og3-mobile-navigation",
+                );
+
+                expect(
+                    screen.getByRole(
+                        "navigation",
+                        {
+                            name:
+                                "Módulos do sistema no celular",
+                        },
+                    ),
+                ).toBeInTheDocument();
+
+                expect(
+                    screen.getByRole(
+                        "link",
+                        {
+                            name: "Clientes",
+                        },
+                    ),
+                ).toBeInTheDocument();
+            },
+        );
+
+        it(
+            "moves focus into the drawer",
+            () => {
+                renderMobileNavigation();
+
+                expect(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name: "Fechar",
+                        },
+                    ),
+                ).toHaveFocus();
+            },
+        );
+
+        it(
+            "keeps tab navigation inside the drawer",
+            () => {
+                renderMobileNavigation();
+
+                const dialog =
+                    screen.getByRole(
+                        "dialog",
+                        {
+                            name:
+                                "Navegação móvel",
+                        },
+                    );
+
+                const closeButton =
+                    within(
+                        dialog,
+                    ).getByRole(
+                        "button",
+                        {
+                            name: "Fechar",
+                        },
+                    );
+
+                const links =
+                    within(
+                        dialog,
+                    ).getAllByRole(
+                        "link",
+                    );
+
+                const lastLink =
+                    links[
+                    links.length - 1
+                    ];
+
+                lastLink.focus();
+
+                fireEvent.keyDown(
+                    document,
                     {
-                        name:
-                            "Navegação móvel",
-                    },
-                ),
-            ).not.toBeInTheDocument();
-        },
-    );
-
-    it(
-        "renders a modal navigation drawer when open",
-        () => {
-            renderMobileNavigation();
-
-            const dialog =
-                screen.getByRole(
-                    "dialog",
-                    {
-                        name:
-                            "Navegação móvel",
+                        key: "Tab",
                     },
                 );
 
-            expect(
-                dialog,
-            ).toBeInTheDocument();
+                expect(
+                    closeButton,
+                ).toHaveFocus();
 
-            expect(
-                dialog,
-            ).toHaveAttribute(
-                "aria-modal",
-                "true",
-            );
-
-            expect(
-                screen.getByRole(
-                    "navigation",
+                fireEvent.keyDown(
+                    document,
                     {
-                        name:
-                            "Módulos do sistema no celular",
+                        key: "Tab",
+                        shiftKey: true,
                     },
-                ),
-            ).toBeInTheDocument();
+                );
 
-            expect(
-                screen.getByRole(
-                    "link",
+                expect(
+                    lastLink,
+                ).toHaveFocus();
+            },
+        );
+
+        it(
+            "closes with Escape",
+            () => {
+                const onClose =
+                    vi.fn();
+
+                renderMobileNavigation({
+                    onClose,
+                });
+
+                fireEvent.keyDown(
+                    document,
                     {
-                        name: "Clientes",
+                        key: "Escape",
                     },
-                ),
-            ).toBeInTheDocument();
-        },
-    );
+                );
 
-    it(
-        "closes from the close button",
-        () => {
-            const onClose = vi.fn();
+                expect(
+                    onClose,
+                ).toHaveBeenCalledTimes(
+                    1,
+                );
+            },
+        );
 
-            renderMobileNavigation({
-                onClose,
-            });
+        it(
+            "closes from the close button",
+            () => {
+                const onClose =
+                    vi.fn();
 
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name: "Fechar",
-                    },
-                ),
-            );
+                renderMobileNavigation({
+                    onClose,
+                });
 
-            expect(
-                onClose,
-            ).toHaveBeenCalledTimes(1);
-        },
-    );
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Fechar",
+                        },
+                    ),
+                );
 
-    it(
-        "closes from the backdrop",
-        () => {
-            const onClose = vi.fn();
+                expect(
+                    onClose,
+                ).toHaveBeenCalledTimes(
+                    1,
+                );
+            },
+        );
 
-            renderMobileNavigation({
-                onClose,
-            });
+        it(
+            "closes from the backdrop",
+            () => {
+                const onClose =
+                    vi.fn();
 
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Fechar navegação",
-                    },
-                ),
-            );
+                renderMobileNavigation({
+                    onClose,
+                });
 
-            expect(
-                onClose,
-            ).toHaveBeenCalledTimes(1);
-        },
-    );
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Fechar navegação",
+                        },
+                    ),
+                );
 
-    it(
-        "closes after selecting a route",
-        () => {
-            const onClose = vi.fn();
+                expect(
+                    onClose,
+                ).toHaveBeenCalledTimes(
+                    1,
+                );
+            },
+        );
 
-            renderMobileNavigation({
-                onClose,
-            });
+        it(
+            "closes after selecting a route",
+            () => {
+                const onClose =
+                    vi.fn();
 
-            fireEvent.click(
-                screen.getByRole(
-                    "link",
-                    {
-                        name: "Clientes",
-                    },
-                ),
-            );
+                renderMobileNavigation({
+                    onClose,
+                });
 
-            expect(
-                onClose,
-            ).toHaveBeenCalledTimes(1);
-        },
-    );
-});
+                fireEvent.click(
+                    screen.getByRole(
+                        "link",
+                        {
+                            name:
+                                "Clientes",
+                        },
+                    ),
+                );
+
+                expect(
+                    onClose,
+                ).toHaveBeenCalledTimes(
+                    1,
+                );
+            },
+        );
+    },
+);

@@ -1,8 +1,13 @@
-import { useEffect, useId } from "react";
+import {
+    useId,
+} from "react";
 
 import type {
     Branch,
 } from "@/features/branches/model/branch";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -17,9 +22,15 @@ export interface BranchDetailsProps {
     readonly canReactivate: boolean;
     readonly isSubmitting: boolean;
     readonly onClose: () => void;
-    readonly onEdit: (branch: Branch) => void;
-    readonly onDeactivate: (branch: Branch) => void;
-    readonly onReactivate: (branch: Branch) => void;
+    readonly onEdit: (
+        branch: Branch,
+    ) => void;
+    readonly onDeactivate: (
+        branch: Branch,
+    ) => void;
+    readonly onReactivate: (
+        branch: Branch,
+    ) => void;
 }
 
 function formatOptionalValue(
@@ -36,9 +47,12 @@ function formatAddress(
         branch.number,
     ]
         .filter(
-            (value): value is string =>
+            (
+                value,
+            ): value is string =>
                 value !== null &&
-                value.trim().length > 0,
+                value.trim().length >
+                0,
         )
         .join(", ");
 
@@ -49,15 +63,25 @@ function formatAddress(
         branch.postal_code,
     ]
         .filter(
-            (value): value is string =>
+            (
+                value,
+            ): value is string =>
                 value !== null &&
-                value.trim().length > 0,
+                value.trim().length >
+                0,
         )
         .join(" — ");
 
     return (
-        [streetLine, cityLine]
-            .filter((value) => value.length > 0)
+        [
+            streetLine,
+            cityLine,
+        ]
+            .filter(
+                (value) =>
+                    value.length >
+                    0,
+            )
             .join(" | ") ||
         "—"
     );
@@ -74,41 +98,43 @@ export function BranchDetails({
     onDeactivate,
     onReactivate,
 }: BranchDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(() => {
-        const handleKeyDown = (
-            event: KeyboardEvent,
-        ) => {
-            if (event.key === "Escape") {
-                onClose();
-            }
-        };
-
-        window.addEventListener(
-            "keydown",
-            handleKeyDown,
-        );
-
-        return () => {
-            window.removeEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-        };
-    }, [onClose]);
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <div className="og3-data-table__actions">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <div
+                            className="og3-data-table__actions"
+                        >
                             <Badge
                                 variant={
                                     branch.is_active
@@ -116,9 +142,11 @@ export function BranchDetails({
                                         : "neutral"
                                 }
                             >
-                                {branch.is_active
-                                    ? "Ativa"
-                                    : "Inativa"}
+                                {
+                                    branch.is_active
+                                        ? "Ativa"
+                                        : "Inativa"
+                                }
                             </Badge>
 
                             <Badge
@@ -128,27 +156,46 @@ export function BranchDetails({
                                         : "neutral"
                                 }
                             >
-                                {branch.is_headquarters
-                                    ? "Matriz"
-                                    : "Filial"}
+                                {
+                                    branch.is_headquarters
+                                        ? "Matriz"
+                                        : "Filial"
+                                }
                             </Badge>
                         </div>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {branch.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    branch.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {branch.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                branch.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        disabled={isSubmitting}
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -156,77 +203,138 @@ export function BranchDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Razão social</dt>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Razão social
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.legal_name,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.legal_name,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>CNPJ ou documento</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                CNPJ ou documento
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.document_number,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.document_number,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Inscrição estadual</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Inscrição estadual
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.state_registration,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.state_registration,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Telefone</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Telefone
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.phone,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.phone,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Email</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Email
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.email,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.email,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Site</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Site
+                            </dt>
+
                             <dd>
-                                {formatOptionalValue(
-                                    branch.website,
-                                )}
+                                {
+                                    formatOptionalValue(
+                                        branch.website,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Endereço</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Endereço
+                            </dt>
+
                             <dd>
-                                {formatAddress(branch)}
+                                {
+                                    formatAddress(
+                                        branch,
+                                    )
+                                }
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(branch);
+                                onEdit(
+                                    branch,
+                                );
                             }}
                             variant="secondary"
                         >
@@ -237,9 +345,13 @@ export function BranchDetails({
                     {branch.is_active &&
                         canDeactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
-                                    onDeactivate(branch);
+                                    onDeactivate(
+                                        branch,
+                                    );
                                 }}
                                 variant="danger"
                             >
@@ -250,9 +362,13 @@ export function BranchDetails({
                     {!branch.is_active &&
                         canReactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
-                                    onReactivate(branch);
+                                    onReactivate(
+                                        branch,
+                                    );
                                 }}
                             >
                                 Reativar filial

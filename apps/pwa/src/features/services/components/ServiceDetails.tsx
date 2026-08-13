@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useId,
 } from "react";
 
@@ -9,6 +8,9 @@ import type {
 import {
     getServiceExecutionModeLabel,
 } from "@/features/services/model/service";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -37,7 +39,9 @@ export interface ServiceDetailsProps {
 function formatDuration(
     minutes: number | null,
 ): string {
-    if (minutes === null) {
+    if (
+        minutes === null
+    ) {
         return "Não informada";
     }
 
@@ -58,43 +62,40 @@ export function ServiceDetails({
     onDeactivate,
     onReactivate,
 }: ServiceDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ) => {
-                if (event.key === "Escape") {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [onClose],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
                         <Badge
                             variant={
                                 service.is_active
@@ -102,25 +103,45 @@ export function ServiceDetails({
                                     : "neutral"
                             }
                         >
-                            {service.is_active
-                                ? "Ativo"
-                                : "Inativo"}
+                            {
+                                service.is_active
+                                    ? "Ativo"
+                                    : "Inativo"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {service.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    service.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {service.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                service.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -128,67 +149,114 @@ export function ServiceDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Código</dt>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Código
+                            </dt>
+
                             <dd>
-                                {service.code}
+                                {
+                                    service.code
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Nome</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Nome
+                            </dt>
+
                             <dd>
-                                {service.name}
+                                {
+                                    service.name
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Categoria</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Categoria
+                            </dt>
+
                             <dd>
-                                {service.category}
+                                {
+                                    service.category
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Unidade</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Unidade
+                            </dt>
+
                             <dd>
-                                {service.unit}
+                                {
+                                    service.unit
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Modo de execução
                             </dt>
+
                             <dd>
-                                {getServiceExecutionModeLabel(
-                                    service.execution_mode,
-                                )}
+                                {
+                                    getServiceExecutionModeLabel(
+                                        service.execution_mode,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Duração estimada
                             </dt>
+
                             <dd>
-                                {formatDuration(
-                                    service
-                                        .estimated_duration_minutes,
-                                )}
+                                {
+                                    formatDuration(
+                                        service.estimated_duration_minutes,
+                                    )
+                                }
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(service);
+                                onEdit(
+                                    service,
+                                );
                             }}
                             variant="secondary"
                         >

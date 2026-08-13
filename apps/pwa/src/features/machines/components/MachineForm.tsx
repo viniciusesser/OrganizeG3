@@ -1,4 +1,5 @@
 import {
+    useId,
     useState,
 } from "react";
 import type {
@@ -9,6 +10,9 @@ import type {
     Machine,
     MachineCreateInput,
 } from "@/features/machines/model/machine";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Button,
     Heading,
@@ -27,18 +31,18 @@ export interface MachineFormProps {
 }
 
 interface Draft {
-    code: string;
-    name: string;
-    machineType: string;
-    manufacturer: string;
-    model: string;
-    serialNumber: string;
+    readonly code: string;
+    readonly name: string;
+    readonly machineType: string;
+    readonly manufacturer: string;
+    readonly model: string;
+    readonly serialNumber: string;
 }
 
 interface Errors {
-    code?: string;
-    name?: string;
-    machineType?: string;
+    readonly code?: string;
+    readonly name?: string;
+    readonly machineType?: string;
 }
 
 function createDraft(
@@ -46,17 +50,23 @@ function createDraft(
 ): Draft {
     return {
         code:
-            machine?.code ?? "",
+            machine?.code ??
+            "",
         name:
-            machine?.name ?? "",
+            machine?.name ??
+            "",
         machineType:
-            machine?.machine_type ?? "",
+            machine?.machine_type ??
+            "",
         manufacturer:
-            machine?.manufacturer ?? "",
+            machine?.manufacturer ??
+            "",
         model:
-            machine?.model ?? "",
+            machine?.model ??
+            "",
         serialNumber:
-            machine?.serial_number ?? "",
+            machine?.serial_number ??
+            "",
     };
 }
 
@@ -74,24 +84,34 @@ function optionalText(
 function validate(
     draft: Draft,
 ): Errors {
-    const errors: Errors = {};
+    const errors: {
+        code?: string;
+        name?: string;
+        machineType?: string;
+    } = {};
 
     if (
-        draft.code.trim().length === 0
+        draft.code
+            .trim()
+            .length === 0
     ) {
         errors.code =
             "Informe o código da máquina.";
     }
 
     if (
-        draft.name.trim().length === 0
+        draft.name
+            .trim()
+            .length === 0
     ) {
         errors.name =
             "Informe o nome da máquina.";
     }
 
     if (
-        draft.machineType.trim().length === 0
+        draft.machineType
+            .trim()
+            .length === 0
     ) {
         errors.machineType =
             "Informe o tipo da máquina.";
@@ -107,19 +127,36 @@ export function MachineForm({
     onCancel,
     onSubmit,
 }: MachineFormProps) {
+    const titleId =
+        useId();
+
+    const descriptionId =
+        useId();
+
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose:
+            onCancel,
+    });
+
     const [
         draft,
         setDraft,
-    ] =
-        useState<Draft>(
-            createDraft(machine),
-        );
+    ] = useState<Draft>(
+        createDraft(
+            machine,
+        ),
+    );
 
     const [
         errors,
         setErrors,
-    ] =
-        useState<Errors>({});
+    ] = useState<Errors>(
+        {},
+    );
 
     const isEditing =
         machine !== undefined;
@@ -138,12 +175,15 @@ export function MachineForm({
     };
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
         const nextErrors =
-            validate(draft);
+            validate(
+                draft,
+            );
 
         setErrors(
             nextErrors,
@@ -163,9 +203,11 @@ export function MachineForm({
                     .trim()
                     .toUpperCase(),
             name:
-                draft.name.trim(),
+                draft.name
+                    .trim(),
             machine_type:
-                draft.machineType.trim(),
+                draft.machineType
+                    .trim(),
             manufacturer:
                 optionalText(
                     draft.manufacturer,
@@ -183,31 +225,64 @@ export function MachineForm({
 
     return (
         <div
-            aria-labelledby="machine-form-title"
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id="machine-form-title">
-                                {isEditing
-                                    ? "Editar máquina"
-                                    : "Nova máquina"}
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar máquina"
+                                        : "Nova máquina"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
                             Informe a identificação e os dados técnicos do equipamento.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -217,95 +292,167 @@ export function MachineForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
+                    onSubmit={(
+                        event,
+                    ) => {
                         void handleSubmit(
                             event,
                         );
                     }}
                 >
-                    <div className="og3-dialog__body">
-                        <div className="og3-form-grid">
+                    <div
+                        className="og3-dialog__body"
+                    >
+                        <div
+                            className="og3-form-grid"
+                        >
                             <Input
-                                autoFocus
-                                disabled={isSubmitting}
-                                error={errors.code}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.code
+                                }
                                 label="Código da máquina *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "code",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.code}
+                                value={
+                                    draft.code
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.name}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.name
+                                }
                                 label="Nome da máquina *"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "name",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.name}
+                                value={
+                                    draft.name
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.machineType}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.machineType
+                                }
                                 label="Tipo da máquina *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "machineType",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 placeholder="Ex.: Seccionadora"
-                                value={draft.machineType}
+                                value={
+                                    draft.machineType
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Fabricante"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "manufacturer",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.manufacturer}
+                                value={
+                                    draft.manufacturer
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Modelo"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "model",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.model}
+                                value={
+                                    draft.model
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Número de série"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "serialNumber",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.serialNumber}
+                                value={
+                                    draft.serialNumber
+                                }
                             />
                         </div>
 
@@ -316,34 +463,52 @@ export function MachineForm({
                             O vínculo com filial será disponibilizado na integração da tela de Filiais.
                         </Text>
 
-                        {submitError !== null && (
-                            <div
-                                className="og3-inline-message og3-inline-message--danger"
-                                role="alert"
-                            >
-                                {submitError}
-                            </div>
-                        )}
+                        {submitError !==
+                            null && (
+                                <div
+                                    className={[
+                                        "og3-inline-message",
+                                        "og3-inline-message--danger",
+                                    ].join(
+                                        " ",
+                                    )}
+                                    role="alert"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </div>
+                            )}
                     </div>
 
-                    <footer className="og3-dialog__footer">
+                    <footer
+                        className="og3-dialog__footer"
+                    >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Salvar máquina"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Salvar máquina"
+                            }
                         </Button>
                     </footer>
                 </form>

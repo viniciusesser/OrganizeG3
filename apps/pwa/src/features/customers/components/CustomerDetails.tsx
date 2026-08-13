@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useId,
 } from "react";
 
@@ -11,6 +10,9 @@ import {
     formatCustomerPhone,
     getCustomerTypeLabel,
 } from "@/features/customers/model/customer";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -25,9 +27,15 @@ export interface CustomerDetailsProps {
     readonly canReactivate: boolean;
     readonly isSubmitting: boolean;
     readonly onClose: () => void;
-    readonly onEdit: (customer: Customer) => void;
-    readonly onArchive: (customer: Customer) => void;
-    readonly onReactivate: (customer: Customer) => void;
+    readonly onEdit: (
+        customer: Customer,
+    ) => void;
+    readonly onArchive: (
+        customer: Customer,
+    ) => void;
+    readonly onReactivate: (
+        customer: Customer,
+    ) => void;
 }
 
 export function CustomerDetails({
@@ -41,42 +49,33 @@ export function CustomerDetails({
     onArchive,
     onReactivate,
 }: CustomerDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ) => {
-                if (event.key === "Escape") {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [onClose],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
             <div
-                className="og3-dialog og3-dialog--md"
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
             >
                 <header
                     className="og3-dialog__header"
@@ -91,25 +90,45 @@ export function CustomerDetails({
                                     : "neutral"
                             }
                         >
-                            {customer.is_active
-                                ? "Ativo"
-                                : "Inativo"}
+                            {
+                                customer.is_active
+                                    ? "Ativo"
+                                    : "Inativo"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {customer.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    customer.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {customer.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                customer.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -117,50 +136,89 @@ export function CustomerDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Tipo de pessoa</dt>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Tipo de pessoa
+                            </dt>
+
                             <dd>
-                                {getCustomerTypeLabel(
-                                    customer.customer_type,
-                                )}
+                                {
+                                    getCustomerTypeLabel(
+                                        customer.customer_type,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Documento</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Documento
+                            </dt>
+
                             <dd>
-                                {formatCustomerDocument(
-                                    customer.document_number,
-                                )}
+                                {
+                                    formatCustomerDocument(
+                                        customer.document_number,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Telefone</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Telefone
+                            </dt>
+
                             <dd>
-                                {formatCustomerPhone(
-                                    customer.phone,
-                                )}
+                                {
+                                    formatCustomerPhone(
+                                        customer.phone,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Email</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Email
+                            </dt>
+
                             <dd>
-                                {customer.email ?? "—"}
+                                {
+                                    customer.email ??
+                                    "—"
+                                }
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(customer);
+                                onEdit(
+                                    customer,
+                                );
                             }}
                             variant="secondary"
                         >
@@ -171,9 +229,13 @@ export function CustomerDetails({
                     {customer.is_active &&
                         canArchive && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
-                                    onArchive(customer);
+                                    onArchive(
+                                        customer,
+                                    );
                                 }}
                                 variant="danger"
                             >
@@ -184,9 +246,13 @@ export function CustomerDetails({
                     {!customer.is_active &&
                         canReactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
-                                    onReactivate(customer);
+                                    onReactivate(
+                                        customer,
+                                    );
                                 }}
                             >
                                 Reativar cliente

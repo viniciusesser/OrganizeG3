@@ -11,6 +11,9 @@ import type {
     CreateCompanyPayload,
 } from "@/features/company/model/company";
 import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
+import {
     Button,
     Heading,
     Input,
@@ -32,12 +35,10 @@ interface CompanyFormDraft {
     readonly legalName: string;
     readonly documentNumber: string;
     readonly stateRegistration: string;
-
     readonly email: string;
     readonly phone: string;
     readonly website: string;
     readonly logoPath: string;
-
     readonly street: string;
     readonly number: string;
     readonly district: string;
@@ -57,42 +58,55 @@ function createDraft(
 ): CompanyFormDraft {
     return {
         tradeName:
-            company?.trade_name ?? "",
+            company?.trade_name ??
+            "",
         legalName:
-            company?.legal_name ?? "",
+            company?.legal_name ??
+            "",
         documentNumber:
-            company?.document_number ?? "",
+            company?.document_number ??
+            "",
         stateRegistration:
-            company?.state_registration ?? "",
-
+            company?.state_registration ??
+            "",
         email:
-            company?.email ?? "",
+            company?.email ??
+            "",
         phone:
-            company?.phone ?? "",
+            company?.phone ??
+            "",
         website:
-            company?.website ?? "",
+            company?.website ??
+            "",
         logoPath:
-            company?.logo_path ?? "",
-
+            company?.logo_path ??
+            "",
         street:
-            company?.street ?? "",
+            company?.street ??
+            "",
         number:
-            company?.number ?? "",
+            company?.number ??
+            "",
         district:
-            company?.district ?? "",
+            company?.district ??
+            "",
         city:
-            company?.city ?? "",
+            company?.city ??
+            "",
         state:
-            company?.state ?? "",
+            company?.state ??
+            "",
         postalCode:
-            company?.postal_code ?? "",
+            company?.postal_code ??
+            "",
     };
 }
 
 function optionalValue(
     value: string,
 ): string | null {
-    const normalized = value.trim();
+    const normalized =
+        value.trim();
 
     return normalized.length > 0
         ? normalized
@@ -108,7 +122,11 @@ function validateForm(
         state?: string;
     } = {};
 
-    if (draft.tradeName.trim().length === 0) {
+    if (
+        draft.tradeName
+            .trim()
+            .length === 0
+    ) {
         errors.tradeName =
             "Informe o nome fantasia da empresa.";
     }
@@ -117,7 +135,8 @@ function validateForm(
         draft.email.trim();
 
     if (
-        normalizedEmail.length > 0 &&
+        normalizedEmail.length >
+        0 &&
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
             normalizedEmail,
         )
@@ -130,8 +149,10 @@ function validateForm(
         draft.state.trim();
 
     if (
-        normalizedState.length > 0 &&
-        normalizedState.length !== 2
+        normalizedState.length >
+        0 &&
+        normalizedState.length !==
+        2
     ) {
         errors.state =
             "Informe a sigla UF com dois caracteres.";
@@ -147,48 +168,81 @@ export function CompanyForm({
     onCancel,
     onSubmit,
 }: CompanyFormProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    const [draft, setDraft] =
-        useState<CompanyFormDraft>(
-            createDraft(company),
-        );
+    const descriptionId =
+        useId();
 
-    const [errors, setErrors] =
-        useState<CompanyFormErrors>({});
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose:
+            onCancel,
+    });
+
+    const [
+        draft,
+        setDraft,
+    ] = useState<CompanyFormDraft>(
+        createDraft(
+            company,
+        ),
+    );
+
+    const [
+        errors,
+        setErrors,
+    ] = useState<CompanyFormErrors>(
+        {},
+    );
 
     const isEditing =
         company !== undefined;
 
     const updateField = (
-        field: keyof CompanyFormDraft,
+        field:
+            keyof CompanyFormDraft,
         value: string,
-    ) => {
-        setDraft((current) => ({
-            ...current,
-            [field]: value,
-        }));
+    ): void => {
+        setDraft(
+            (current) => ({
+                ...current,
+                [field]:
+                    value,
+            }),
+        );
     };
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
         const nextErrors =
-            validateForm(draft);
+            validateForm(
+                draft,
+            );
 
-        setErrors(nextErrors);
+        setErrors(
+            nextErrors,
+        );
 
         if (
-            Object.keys(nextErrors).length > 0
+            Object.keys(
+                nextErrors,
+            ).length > 0
         ) {
             return;
         }
 
         await onSubmit({
             trade_name:
-                draft.tradeName.trim(),
+                draft.tradeName
+                    .trim(),
             legal_name:
                 optionalValue(
                     draft.legalName,
@@ -201,28 +255,43 @@ export function CompanyForm({
                 optionalValue(
                     draft.stateRegistration,
                 ),
-
             email:
-                optionalValue(draft.email),
+                optionalValue(
+                    draft.email,
+                ),
             phone:
-                optionalValue(draft.phone),
+                optionalValue(
+                    draft.phone,
+                ),
             website:
-                optionalValue(draft.website),
+                optionalValue(
+                    draft.website,
+                ),
             logo_path:
-                optionalValue(draft.logoPath),
-
+                optionalValue(
+                    draft.logoPath,
+                ),
             street:
-                optionalValue(draft.street),
+                optionalValue(
+                    draft.street,
+                ),
             number:
-                optionalValue(draft.number),
+                optionalValue(
+                    draft.number,
+                ),
             district:
-                optionalValue(draft.district),
+                optionalValue(
+                    draft.district,
+                ),
             city:
-                optionalValue(draft.city),
+                optionalValue(
+                    draft.city,
+                ),
             state:
                 optionalValue(
                     draft.state,
-                )?.toUpperCase() ?? null,
+                )?.toUpperCase() ??
+                null,
             postal_code:
                 optionalValue(
                     draft.postalCode,
@@ -232,32 +301,64 @@ export function CompanyForm({
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {isEditing
-                                    ? "Editar empresa"
-                                    : "Cadastrar empresa"}
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar empresa"
+                                        : "Cadastrar empresa"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            Preencha os dados cadastrais,
-                            de contato e endereço da empresa.
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
+                            Preencha os dados cadastrais, de contato e endereço da empresa.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -267,50 +368,86 @@ export function CompanyForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
-                        void handleSubmit(event);
+                    onSubmit={(
+                        event,
+                    ) => {
+                        void handleSubmit(
+                            event,
+                        );
                     }}
                 >
-                    <div className="og3-dialog__body">
-                        <div className="og3-form-grid">
+                    <div
+                        className="og3-dialog__body"
+                    >
+                        <div
+                            className="og3-form-grid"
+                        >
                             <Input
-                                autoFocus
-                                disabled={isSubmitting}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
                                 error={
                                     errors.tradeName
                                 }
                                 label="Nome fantasia *"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "tradeName",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.tradeName}
+                                value={
+                                    draft.tradeName
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Razão social"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "legalName",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.legalName}
+                                value={
+                                    draft.legalName
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="CNPJ ou documento"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "documentNumber",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 value={
@@ -319,13 +456,21 @@ export function CompanyForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Inscrição estadual"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "stateRegistration",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 value={
@@ -335,175 +480,297 @@ export function CompanyForm({
 
                             <Input
                                 autoComplete="email"
-                                disabled={isSubmitting}
-                                error={errors.email}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.email
+                                }
                                 label="Email"
-                                maxLength={320}
-                                onChange={(event) => {
+                                maxLength={
+                                    320
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "email",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="email"
-                                value={draft.email}
+                                value={
+                                    draft.email
+                                }
                             />
 
                             <Input
                                 autoComplete="tel"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Telefone"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "phone",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 type="tel"
-                                value={draft.phone}
+                                value={
+                                    draft.phone
+                                }
                             />
 
                             <Input
                                 autoComplete="url"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Site"
-                                maxLength={2048}
-                                onChange={(event) => {
+                                maxLength={
+                                    2048
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "website",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 placeholder="https://"
                                 type="url"
-                                value={draft.website}
+                                value={
+                                    draft.website
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Caminho do logotipo"
-                                maxLength={500}
-                                onChange={(event) => {
+                                maxLength={
+                                    500
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "logoPath",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
                                 supportText="O envio do arquivo do logotipo será integrado posteriormente."
-                                value={draft.logoPath}
+                                value={
+                                    draft.logoPath
+                                }
                             />
 
                             <Input
                                 autoComplete="street-address"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Logradouro"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "street",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.street}
+                                value={
+                                    draft.street
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Número"
-                                maxLength={30}
-                                onChange={(event) => {
+                                maxLength={
+                                    30
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "number",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.number}
+                                value={
+                                    draft.number
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Bairro"
-                                maxLength={120}
-                                onChange={(event) => {
+                                maxLength={
+                                    120
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "district",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.district}
+                                value={
+                                    draft.district
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Cidade"
-                                maxLength={120}
-                                onChange={(event) => {
+                                maxLength={
+                                    120
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "city",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.city}
+                                value={
+                                    draft.city
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.state}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.state
+                                }
                                 label="Estado (UF)"
-                                maxLength={2}
-                                onChange={(event) => {
+                                maxLength={
+                                    2
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "state",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.state}
+                                value={
+                                    draft.state
+                                }
                             />
 
                             <Input
                                 autoComplete="postal-code"
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="CEP"
-                                maxLength={20}
-                                onChange={(event) => {
+                                maxLength={
+                                    20
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "postalCode",
-                                        event.target.value,
+                                        event
+                                            .target
+                                            .value,
                                     );
                                 }}
-                                value={draft.postalCode}
+                                value={
+                                    draft.postalCode
+                                }
                             />
                         </div>
 
-                        {submitError !== null && (
-                            <div
-                                className="og3-inline-message og3-inline-message--danger"
-                                role="alert"
-                            >
-                                {submitError}
-                            </div>
-                        )}
+                        {submitError !==
+                            null && (
+                                <div
+                                    className={[
+                                        "og3-inline-message",
+                                        "og3-inline-message--danger",
+                                    ].join(
+                                        " ",
+                                    )}
+                                    role="alert"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </div>
+                            )}
                     </div>
 
-                    <footer className="og3-dialog__footer">
+                    <footer
+                        className="og3-dialog__footer"
+                    >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Cadastrar empresa"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Cadastrar empresa"
+                            }
                         </Button>
                     </footer>
                 </form>

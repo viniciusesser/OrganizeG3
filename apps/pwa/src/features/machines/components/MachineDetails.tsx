@@ -1,5 +1,5 @@
 import {
-    useEffect,
+    useId,
     useState,
 } from "react";
 
@@ -11,6 +11,9 @@ import {
     MACHINE_STATUSES,
     getMachineStatusLabel,
 } from "@/features/machines/model/machine";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -45,8 +48,10 @@ export interface MachineDetailsProps {
 function show(
     value: string | null,
 ): string {
-    return value ??
-        "Não informado";
+    return (
+        value ??
+        "Não informado"
+    );
 }
 
 export function MachineDetails({
@@ -63,53 +68,50 @@ export function MachineDetails({
     onDeactivate,
     onReactivate,
 }: MachineDetailsProps) {
+    const titleId =
+        useId();
+
+    const statusId =
+        useId();
+
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
+
     const [
         status,
         setStatus,
-    ] =
-        useState<MachineStatus>(
-            machine.status,
-        );
-
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ): void => {
-                if (
-                    event.key === "Escape"
-                ) {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [
-            onClose,
-        ],
+    ] = useState<MachineStatus>(
+        machine.status,
     );
 
     return (
         <div
-            aria-labelledby="machine-details-title"
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
                         <Badge
                             variant={
                                 machine.is_active
@@ -117,25 +119,45 @@ export function MachineDetails({
                                     : "neutral"
                             }
                         >
-                            {machine.is_active
-                                ? "Ativa"
-                                : "Inativa"}
+                            {
+                                machine.is_active
+                                    ? "Ativa"
+                                    : "Inativa"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id="machine-details-title">
-                                {machine.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    machine.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {machine.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                machine.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -143,121 +165,178 @@ export function MachineDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Tipo
                             </dt>
 
                             <dd>
-                                {machine.machine_type}
+                                {
+                                    machine.machine_type
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Status operacional
                             </dt>
 
                             <dd>
-                                {getMachineStatusLabel(
-                                    machine.status,
-                                )}
+                                {
+                                    getMachineStatusLabel(
+                                        machine.status,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Fabricante
                             </dt>
 
                             <dd>
-                                {show(
-                                    machine.manufacturer,
-                                )}
+                                {
+                                    show(
+                                        machine.manufacturer,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Modelo
                             </dt>
 
                             <dd>
-                                {show(
-                                    machine.model,
-                                )}
+                                {
+                                    show(
+                                        machine.model,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Número de série
                             </dt>
 
                             <dd>
-                                {show(
-                                    machine.serial_number,
-                                )}
+                                {
+                                    show(
+                                        machine.serial_number,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
+                        <div
+                            className="og3-details-grid__item"
+                        >
                             <dt>
                                 Filial
                             </dt>
 
                             <dd>
-                                {show(
-                                    machine.branch_id,
-                                )}
+                                {
+                                    show(
+                                        machine.branch_id,
+                                    )
+                                }
                             </dd>
                         </div>
                     </dl>
 
                     {machine.is_active &&
                         canChangeStatus && (
-                            <div className="og3-form-grid">
-                                <div className="og3-field">
+                            <div
+                                className="og3-form-grid"
+                            >
+                                <div
+                                    className="og3-field"
+                                >
                                     <label
                                         className="og3-field__label"
-                                        htmlFor="machine-status"
+                                        htmlFor={
+                                            statusId
+                                        }
                                     >
                                         Alterar status operacional
                                     </label>
 
                                     <select
                                         className="og3-field__input"
-                                        disabled={isSubmitting}
-                                        id="machine-status"
-                                        onChange={(event) => {
+                                        disabled={
+                                            isSubmitting
+                                        }
+                                        id={
+                                            statusId
+                                        }
+                                        onChange={(
+                                            event,
+                                        ) => {
                                             setStatus(
-                                                event.target.value as MachineStatus,
+                                                event
+                                                    .target
+                                                    .value as MachineStatus,
                                             );
                                         }}
-                                        value={status}
+                                        value={
+                                            status
+                                        }
                                     >
-                                        {MACHINE_STATUSES.map(
-                                            (item) => (
-                                                <option
-                                                    key={item}
-                                                    value={item}
-                                                >
-                                                    {getMachineStatusLabel(
-                                                        item,
-                                                    )}
-                                                </option>
-                                            ),
-                                        )}
+                                        {
+                                            MACHINE_STATUSES.map(
+                                                (
+                                                    item,
+                                                ) => (
+                                                    <option
+                                                        key={
+                                                            item
+                                                        }
+                                                        value={
+                                                            item
+                                                        }
+                                                    >
+                                                        {
+                                                            getMachineStatusLabel(
+                                                                item,
+                                                            )
+                                                        }
+                                                    </option>
+                                                ),
+                                            )
+                                        }
                                     </select>
                                 </div>
 
-                                <div className="og3-filter-bar__actions">
+                                <div
+                                    className="og3-filter-bar__actions"
+                                >
                                     <Button
                                         disabled={
                                             isSubmitting ||
-                                            status === machine.status
+                                            status ===
+                                            machine.status
                                         }
                                         onClick={() => {
                                             void onChangeStatus(
@@ -267,28 +346,42 @@ export function MachineDetails({
                                         }}
                                         variant="secondary"
                                     >
-                                        {isSubmitting
-                                            ? "Atualizando..."
-                                            : "Atualizar status"}
+                                        {
+                                            isSubmitting
+                                                ? "Atualizando..."
+                                                : "Atualizar status"
+                                        }
                                     </Button>
                                 </div>
                             </div>
                         )}
 
-                    {submitError !== null && (
-                        <div
-                            className="og3-inline-message og3-inline-message--danger"
-                            role="alert"
-                        >
-                            {submitError}
-                        </div>
-                    )}
+                    {submitError !==
+                        null && (
+                            <div
+                                className={[
+                                    "og3-inline-message",
+                                    "og3-inline-message--danger",
+                                ].join(
+                                    " ",
+                                )}
+                                role="alert"
+                            >
+                                {
+                                    submitError
+                                }
+                            </div>
+                        )}
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
                                 onEdit(
                                     machine,
@@ -303,7 +396,9 @@ export function MachineDetails({
                     {machine.is_active &&
                         canDeactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onDeactivate(
                                         machine,
@@ -318,7 +413,9 @@ export function MachineDetails({
                     {!machine.is_active &&
                         canReactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onReactivate(
                                         machine,

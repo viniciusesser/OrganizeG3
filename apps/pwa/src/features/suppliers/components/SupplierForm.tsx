@@ -11,6 +11,9 @@ import type {
     SupplierCreateInput,
 } from "@/features/suppliers/model/supplier";
 import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
+import {
     Button,
     Heading,
     Input,
@@ -60,32 +63,60 @@ function createDraft(
     supplier?: Supplier,
 ): SupplierFormDraft {
     return {
-        code: supplier?.code ?? "",
-        name: supplier?.name ?? "",
+        code:
+            supplier?.code ??
+            "",
+        name:
+            supplier?.name ??
+            "",
         tradeName:
-            supplier?.trade_name ?? "",
+            supplier?.trade_name ??
+            "",
         legalName:
-            supplier?.legal_name ?? "",
+            supplier?.legal_name ??
+            "",
         documentNumber:
-            supplier?.document_number ?? "",
+            supplier?.document_number ??
+            "",
         stateRegistration:
-            supplier?.state_registration ?? "",
-        email: supplier?.email ?? "",
+            supplier?.state_registration ??
+            "",
+        email:
+            supplier?.email ??
+            "",
         invoiceEmail:
-            supplier?.invoice_email ?? "",
-        phone: supplier?.phone ?? "",
+            supplier?.invoice_email ??
+            "",
+        phone:
+            supplier?.phone ??
+            "",
         secondaryPhone:
-            supplier?.secondary_phone ?? "",
-        website: supplier?.website ?? "",
+            supplier?.secondary_phone ??
+            "",
+        website:
+            supplier?.website ??
+            "",
         contactName:
-            supplier?.contact_name ?? "",
+            supplier?.contact_name ??
+            "",
         postalCode:
-            supplier?.postal_code ?? "",
-        street: supplier?.street ?? "",
-        number: supplier?.number ?? "",
-        district: supplier?.district ?? "",
-        city: supplier?.city ?? "",
-        state: supplier?.state ?? "",
+            supplier?.postal_code ??
+            "",
+        street:
+            supplier?.street ??
+            "",
+        number:
+            supplier?.number ??
+            "",
+        district:
+            supplier?.district ??
+            "",
+        city:
+            supplier?.city ??
+            "",
+        state:
+            supplier?.state ??
+            "",
     };
 }
 
@@ -125,17 +156,29 @@ function validateForm(
         state?: string;
     } = {};
 
-    if (draft.code.trim().length === 0) {
+    if (
+        draft.code
+            .trim()
+            .length === 0
+    ) {
         errors.code =
             "Informe o código do fornecedor.";
     }
 
-    if (draft.name.trim().length === 0) {
+    if (
+        draft.name
+            .trim()
+            .length === 0
+    ) {
         errors.name =
             "Informe o nome do fornecedor.";
     }
 
-    if (!isValidEmail(draft.email)) {
+    if (
+        !isValidEmail(
+            draft.email,
+        )
+    ) {
         errors.email =
             "Informe um email válido.";
     }
@@ -170,51 +213,82 @@ export function SupplierForm({
     onCancel,
     onSubmit,
 }: SupplierFormProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    const [draft, setDraft] =
-        useState<SupplierFormDraft>(
-            createDraft(supplier),
-        );
+    const descriptionId =
+        useId();
 
-    const [errors, setErrors] =
-        useState<SupplierFormErrors>({});
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose:
+            onCancel,
+    });
+
+    const [
+        draft,
+        setDraft,
+    ] = useState<SupplierFormDraft>(
+        createDraft(
+            supplier,
+        ),
+    );
+
+    const [
+        errors,
+        setErrors,
+    ] = useState<SupplierFormErrors>(
+        {},
+    );
 
     const isEditing =
         supplier !== undefined;
 
     const updateField = (
-        field: keyof SupplierFormDraft,
+        field:
+            keyof SupplierFormDraft,
         value: string,
-    ) => {
+    ): void => {
         setDraft(
             (current) => ({
                 ...current,
-                [field]: value,
+                [field]:
+                    value,
             }),
         );
     };
 
     const handleSubmit = async (
-        event: FormEvent<HTMLFormElement>,
+        event:
+            FormEvent<HTMLFormElement>,
     ): Promise<void> => {
         event.preventDefault();
 
         const nextErrors =
-            validateForm(draft);
+            validateForm(
+                draft,
+            );
 
-        setErrors(nextErrors);
+        setErrors(
+            nextErrors,
+        );
 
         if (
-            Object.keys(nextErrors)
-                .length > 0
+            Object.keys(
+                nextErrors,
+            ).length > 0
         ) {
             return;
         }
 
         await onSubmit({
-            code: draft.code.trim(),
-            name: draft.name.trim(),
+            code:
+                draft.code.trim(),
+            name:
+                draft.name.trim(),
             trade_name:
                 optionalValue(
                     draft.tradeName,
@@ -285,31 +359,64 @@ export function SupplierForm({
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-describedby={
+                descriptionId
+            }
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {isEditing
-                                    ? "Editar fornecedor"
-                                    : "Novo fornecedor"}
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    isEditing
+                                        ? "Editar fornecedor"
+                                        : "Novo fornecedor"
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
+                        <Text
+                            id={
+                                descriptionId
+                            }
+                            tone="secondary"
+                        >
                             Preencha os dados cadastrais, de contato e endereço.
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar formulário"
-                        disabled={isSubmitting}
-                        onClick={onCancel}
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onCancel
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -319,74 +426,122 @@ export function SupplierForm({
 
                 <form
                     className="og3-customer-form"
-                    onSubmit={(event) => {
+                    onSubmit={(
+                        event,
+                    ) => {
                         void handleSubmit(
                             event,
                         );
                     }}
                 >
-                    <div className="og3-dialog__body">
-                        <div className="og3-form-grid">
+                    <div
+                        className="og3-dialog__body"
+                    >
+                        <div
+                            className="og3-form-grid"
+                        >
                             <Input
-                                autoFocus
-                                disabled={isSubmitting}
-                                error={errors.code}
+                                data-og3-autofocus="true"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.code
+                                }
                                 label="Código do fornecedor *"
-                                maxLength={100}
-                                onChange={(event) => {
+                                maxLength={
+                                    100
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "code",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.code}
+                                value={
+                                    draft.code
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.name}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.name
+                                }
                                 label="Nome do fornecedor *"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "name",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.name}
+                                value={
+                                    draft.name
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Nome fantasia"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "tradeName",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.tradeName}
+                                value={
+                                    draft.tradeName
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Razão social"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "legalName",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.legalName}
+                                value={
+                                    draft.legalName
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="CPF ou CNPJ"
-                                maxLength={32}
-                                onChange={(event) => {
+                                maxLength={
+                                    32
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "documentNumber",
                                         event.target.value,
@@ -398,10 +553,16 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Inscrição estadual"
-                                maxLength={50}
-                                onChange={(event) => {
+                                maxLength={
+                                    50
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "stateRegistration",
                                         event.target.value,
@@ -413,28 +574,46 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.email}
+                                autoComplete="email"
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.email
+                                }
                                 label="Email"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "email",
                                         event.target.value,
                                     );
                                 }}
                                 type="email"
-                                value={draft.email}
+                                value={
+                                    draft.email
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="email"
+                                disabled={
+                                    isSubmitting
+                                }
                                 error={
                                     errors.invoiceEmail
                                 }
                                 label="Email de faturamento"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "invoiceEmail",
                                         event.target.value,
@@ -447,24 +626,40 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="tel"
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Telefone"
-                                maxLength={32}
-                                onChange={(event) => {
+                                maxLength={
+                                    32
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "phone",
                                         event.target.value,
                                     );
                                 }}
                                 type="tel"
-                                value={draft.phone}
+                                value={
+                                    draft.phone
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="tel"
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Telefone secundário"
-                                maxLength={32}
-                                onChange={(event) => {
+                                maxLength={
+                                    32
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "secondaryPhone",
                                         event.target.value,
@@ -477,10 +672,16 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Pessoa de contato"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "contactName",
                                         event.target.value,
@@ -492,24 +693,40 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="url"
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Site"
-                                maxLength={500}
-                                onChange={(event) => {
+                                maxLength={
+                                    500
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "website",
                                         event.target.value,
                                     );
                                 }}
                                 type="url"
-                                value={draft.website}
+                                value={
+                                    draft.website
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="postal-code"
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="CEP"
-                                maxLength={16}
-                                onChange={(event) => {
+                                maxLength={
+                                    16
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "postalCode",
                                         event.target.value,
@@ -521,100 +738,159 @@ export function SupplierForm({
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                autoComplete="street-address"
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Logradouro"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "street",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.street}
+                                value={
+                                    draft.street
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Número"
-                                maxLength={50}
-                                onChange={(event) => {
+                                maxLength={
+                                    50
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "number",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.number}
+                                value={
+                                    draft.number
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Bairro"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "district",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.district}
+                                value={
+                                    draft.district
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 label="Cidade"
-                                maxLength={255}
-                                onChange={(event) => {
+                                maxLength={
+                                    255
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "city",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.city}
+                                value={
+                                    draft.city
+                                }
                             />
 
                             <Input
-                                disabled={isSubmitting}
-                                error={errors.state}
+                                disabled={
+                                    isSubmitting
+                                }
+                                error={
+                                    errors.state
+                                }
                                 label="UF"
-                                maxLength={2}
-                                onChange={(event) => {
+                                maxLength={
+                                    2
+                                }
+                                onChange={(
+                                    event,
+                                ) => {
                                     updateField(
                                         "state",
                                         event.target.value,
                                     );
                                 }}
-                                value={draft.state}
+                                value={
+                                    draft.state
+                                }
                             />
                         </div>
 
-                        {submitError !== null && (
-                            <div
-                                className="og3-inline-message og3-inline-message--danger"
-                                role="alert"
-                            >
-                                {submitError}
-                            </div>
-                        )}
+                        {submitError !==
+                            null && (
+                                <div
+                                    className={[
+                                        "og3-inline-message",
+                                        "og3-inline-message--danger",
+                                    ].join(" ")}
+                                    role="alert"
+                                >
+                                    {
+                                        submitError
+                                    }
+                                </div>
+                            )}
                     </div>
 
-                    <footer className="og3-dialog__footer">
+                    <footer
+                        className="og3-dialog__footer"
+                    >
                         <Button
-                            disabled={isSubmitting}
-                            onClick={onCancel}
+                            disabled={
+                                isSubmitting
+                            }
+                            onClick={
+                                onCancel
+                            }
                             variant="secondary"
                         >
                             Cancelar
                         </Button>
 
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             type="submit"
                         >
-                            {isSubmitting
-                                ? "Salvando..."
-                                : isEditing
-                                    ? "Salvar alterações"
-                                    : "Salvar fornecedor"}
+                            {
+                                isSubmitting
+                                    ? "Salvando..."
+                                    : isEditing
+                                        ? "Salvar alterações"
+                                        : "Salvar fornecedor"
+                            }
                         </Button>
                     </footer>
                 </form>

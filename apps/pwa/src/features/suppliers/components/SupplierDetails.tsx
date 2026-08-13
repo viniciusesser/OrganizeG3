@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useId,
 } from "react";
 
@@ -11,6 +10,9 @@ import {
     formatSupplierDocument,
     formatSupplierPhone,
 } from "@/features/suppliers/model/supplier";
+import {
+    useAccessibleOverlay,
+} from "@/shared/hooks/useAccessibleOverlay";
 import {
     Badge,
     Button,
@@ -39,10 +41,12 @@ export interface SupplierDetailsProps {
 function displayValue(
     value: string | null,
 ): string {
-    return value !== null &&
-        value.trim().length > 0
-        ? value
-        : "—";
+    return (
+        value !== null &&
+            value.trim().length > 0
+            ? value
+            : "—"
+    );
 }
 
 export function SupplierDetails({
@@ -56,43 +60,40 @@ export function SupplierDetails({
     onDeactivate,
     onReactivate,
 }: SupplierDetailsProps) {
-    const titleId = useId();
+    const titleId =
+        useId();
 
-    useEffect(
-        () => {
-            const handleKeyDown = (
-                event: KeyboardEvent,
-            ) => {
-                if (event.key === "Escape") {
-                    onClose();
-                }
-            };
-
-            window.addEventListener(
-                "keydown",
-                handleKeyDown,
-            );
-
-            return () => {
-                window.removeEventListener(
-                    "keydown",
-                    handleKeyDown,
-                );
-            };
-        },
-        [onClose],
-    );
+    const {
+        overlayRef,
+    } = useAccessibleOverlay<HTMLDivElement>({
+        closeOnEscape:
+            !isSubmitting,
+        onClose,
+    });
 
     return (
         <div
-            aria-labelledby={titleId}
+            aria-labelledby={
+                titleId
+            }
             aria-modal="true"
             className="og3-dialog-backdrop"
+            ref={overlayRef}
             role="dialog"
+            tabIndex={-1}
         >
-            <div className="og3-dialog og3-dialog--md">
-                <header className="og3-dialog__header">
-                    <div className="og3-dialog__heading">
+            <div
+                className={[
+                    "og3-dialog",
+                    "og3-dialog--md",
+                ].join(" ")}
+            >
+                <header
+                    className="og3-dialog__header"
+                >
+                    <div
+                        className="og3-dialog__heading"
+                    >
                         <Badge
                             variant={
                                 supplier.is_active
@@ -100,25 +101,45 @@ export function SupplierDetails({
                                     : "neutral"
                             }
                         >
-                            {supplier.is_active
-                                ? "Ativo"
-                                : "Inativo"}
+                            {
+                                supplier.is_active
+                                    ? "Ativo"
+                                    : "Inativo"
+                            }
                         </Badge>
 
-                        <Heading level={3}>
-                            <span id={titleId}>
-                                {supplier.name}
+                        <Heading
+                            level={3}
+                        >
+                            <span
+                                id={
+                                    titleId
+                                }
+                            >
+                                {
+                                    supplier.name
+                                }
                             </span>
                         </Heading>
 
-                        <Text tone="secondary">
-                            {supplier.code}
+                        <Text
+                            tone="secondary"
+                        >
+                            {
+                                supplier.code
+                            }
                         </Text>
                     </div>
 
                     <Button
                         aria-label="Fechar detalhes"
-                        onClick={onClose}
+                        data-og3-autofocus="true"
+                        disabled={
+                            isSubmitting
+                        }
+                        onClick={
+                            onClose
+                        }
                         size="sm"
                         variant="secondary"
                     >
@@ -126,115 +147,202 @@ export function SupplierDetails({
                     </Button>
                 </header>
 
-                <div className="og3-dialog__body">
-                    <dl className="og3-details-grid">
-                        <div className="og3-details-grid__item">
-                            <dt>Nome fantasia</dt>
+                <div
+                    className="og3-dialog__body"
+                >
+                    <dl
+                        className="og3-details-grid"
+                    >
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Nome fantasia
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.trade_name,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.trade_name,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Razão social</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Razão social
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.legal_name,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.legal_name,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>CPF ou CNPJ</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                CPF ou CNPJ
+                            </dt>
+
                             <dd>
-                                {formatSupplierDocument(
-                                    supplier.document_number,
-                                )}
+                                {
+                                    formatSupplierDocument(
+                                        supplier.document_number,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Inscrição estadual</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Inscrição estadual
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.state_registration,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.state_registration,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Pessoa de contato</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Pessoa de contato
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.contact_name,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.contact_name,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Telefone</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Telefone
+                            </dt>
+
                             <dd>
-                                {formatSupplierPhone(
-                                    supplier.phone,
-                                )}
+                                {
+                                    formatSupplierPhone(
+                                        supplier.phone,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Telefone secundário</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Telefone secundário
+                            </dt>
+
                             <dd>
-                                {formatSupplierPhone(
-                                    supplier.secondary_phone,
-                                )}
+                                {
+                                    formatSupplierPhone(
+                                        supplier.secondary_phone,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Email</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Email
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.email,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.email,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Email de faturamento</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Email de faturamento
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.invoice_email,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.invoice_email,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Site</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Site
+                            </dt>
+
                             <dd>
-                                {displayValue(
-                                    supplier.website,
-                                )}
+                                {
+                                    displayValue(
+                                        supplier.website,
+                                    )
+                                }
                             </dd>
                         </div>
 
-                        <div className="og3-details-grid__item">
-                            <dt>Endereço</dt>
+                        <div
+                            className="og3-details-grid__item"
+                        >
+                            <dt>
+                                Endereço
+                            </dt>
+
                             <dd>
-                                {formatSupplierAddress(
-                                    supplier,
-                                )}
+                                {
+                                    formatSupplierAddress(
+                                        supplier,
+                                    )
+                                }
                             </dd>
                         </div>
                     </dl>
                 </div>
 
-                <footer className="og3-dialog__footer">
+                <footer
+                    className="og3-dialog__footer"
+                >
                     {canEdit && (
                         <Button
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting
+                            }
                             onClick={() => {
-                                onEdit(supplier);
+                                onEdit(
+                                    supplier,
+                                );
                             }}
                             variant="secondary"
                         >
@@ -245,7 +353,9 @@ export function SupplierDetails({
                     {supplier.is_active &&
                         canDeactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onDeactivate(
                                         supplier,
@@ -260,7 +370,9 @@ export function SupplierDetails({
                     {!supplier.is_active &&
                         canReactivate && (
                             <Button
-                                disabled={isSubmitting}
+                                disabled={
+                                    isSubmitting
+                                }
                                 onClick={() => {
                                     onReactivate(
                                         supplier,

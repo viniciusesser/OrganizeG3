@@ -12,14 +12,14 @@ import {
     MobileNavigation,
 } from "@/app/navigation/MobileNavigation";
 import {
+    usePwa,
+} from "@/infrastructure/pwa/usePwa";
+import {
     Badge,
     Button,
     Heading,
     Text,
 } from "@/shared/components/ui";
-import {
-    usePwa,
-} from "@/infrastructure/pwa/usePwa";
 
 export interface AppShellProps {
     readonly children: ReactNode;
@@ -40,26 +40,38 @@ export function AppShell({
     ] = useState(false);
 
     function openMobileNavigation(): void {
-        setIsMobileNavigationOpen(true);
+        setIsMobileNavigationOpen(
+            true,
+        );
     }
 
     function closeMobileNavigation(): void {
-        setIsMobileNavigationOpen(false);
+        setIsMobileNavigationOpen(
+            false,
+        );
     }
 
     return (
-        <div className="og3-app-shell">
+        <div
+            className="og3-app-shell"
+        >
             <aside
                 aria-label="Navegação principal"
                 className="og3-app-shell__sidebar"
             >
-                <div className="og3-app-shell__brand">
-                    <Heading level={4}>
+                <div
+                    className="og3-app-shell__brand"
+                >
+                    <Heading
+                        level={4}
+                    >
                         OrganizeG3
                     </Heading>
                 </div>
 
-                <div className="og3-app-shell__sidebar-content">
+                <div
+                    className="og3-app-shell__sidebar-content"
+                >
                     <DesktopNavigation />
                 </div>
             </aside>
@@ -67,11 +79,14 @@ export function AppShell({
             <header
                 className="og3-app-shell__header"
             >
-                <div className="og3-app-shell__header-start">
+                <div
+                    className="og3-app-shell__header-start"
+                >
                     <div
                         className="og3-app-shell__mobile-menu-trigger"
                     >
                         <Button
+                            aria-controls="og3-mobile-navigation"
                             aria-expanded={
                                 isMobileNavigationOpen
                             }
@@ -89,7 +104,9 @@ export function AppShell({
                     <div
                         className="og3-app-shell__mobile-brand"
                     >
-                        <Heading level={4}>
+                        <Heading
+                            level={4}
+                        >
                             OrganizeG3
                         </Heading>
                     </div>
@@ -106,7 +123,9 @@ export function AppShell({
                     </div>
                 </div>
 
-                <div className="og3-app-shell__header-end">
+                <div
+                    className="og3-app-shell__header-end"
+                >
                     <Badge
                         variant={
                             isOnline
@@ -114,9 +133,11 @@ export function AppShell({
                                 : "warning"
                         }
                     >
-                        {isOnline
-                            ? "Online"
-                            : "Sem conexão"}
+                        {
+                            isOnline
+                                ? "Online"
+                                : "Sem conexão"
+                        }
                     </Badge>
 
                     {canInstall ? (
